@@ -38,7 +38,7 @@
 			"source": {
 				"organizeImports": "on",
 				"noDuplicateClasses": "on",
-				"recommended": true,
+				"recommended": true
 			}
 		}
 	}
