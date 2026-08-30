@@ -7,4 +7,56 @@ on:
     branches: [main]
 
 jobs:
+  apps-web:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./apps/web
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+        
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+          
+      - name: Install Dependencies
+        run: bun ci
+        
+      - name: Lint
+        run: bunx biome ci
+      
+      - name: Build
+        run: bun run build
+        
+      - name: Test
+        run: bun test
+      
+  apps-api:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./apps/api
+        
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.20'
+          cache: true
+          
+      - name: Lint
+        run: echo Lint
   
+      - name: Build
+        run: go build -v
+  
+      - name: Test
+        run: go test -v
