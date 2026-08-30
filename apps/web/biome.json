@@ -10,7 +10,11 @@
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "space",
+		"indentWidth": 2,
+		"bracketSameLine": false,
+		"bracketSpacing": true,
+		"expand": "auto"
 	},
 	"linter": {
 		"enabled": true,
@@ -20,15 +24,23 @@
 	},
 	"javascript": {
 		"formatter": {
-			"quoteStyle": "double"
+			"quoteStyle": "double",
+			"semicolons": "asNeeded",
+			"arrowParentheses": "always",
+			"indentStyle": "space",
+			"bracketSameLine": false,
+			"operatorLinebreak": "before"
 		}
 	},
 	"assist": {
 		"enabled": true,
 		"actions": {
 			"source": {
-				"organizeImports": "on"
+				"organizeImports": "on",
+				"noDuplicateClasses": "on",
+				"recommended": true,
 			}
 		}
 	}
 }
+
