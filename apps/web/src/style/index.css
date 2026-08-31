@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+body {
+  font-family: Excalifont, serif;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: Excalifont;
+  src: url("../assets/fonts/Excalifont-Regular.woff2") format("woff2");
+  font-weight: 400;
+}
