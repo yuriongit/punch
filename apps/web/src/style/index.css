@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Zalando+Sans+SemiExpanded:ital,wght@0,200..900;1,200..900&family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap");
 @import "tailwindcss";
 
 body {
@@ -5,8 +6,8 @@ body {
   font-weight: 400;
 }
 
-@font-face {
-  font-family: Excalifont;
-  src: url("../assets/fonts/Excalifont-Regular.woff2") format("woff2");
-  font-weight: 400;
+body {
+  font-family:
+    Zalando Sans,
+    serif;
 }
