@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsr generate && tsc --build --noEmit && vite build",
-    "lint": "eslint .",
+    "format": "bunx --bun @biomejs/biome format",
+    "format:w": "bunx --bun @biomejs/biome format --write",
+    "lint": "bunx --bun @biomejs/biome lint",
+    "lint:w": "bunx --bun @biomejs/biome lint --write",
+    "check": "bunx --bun @biomejs/biome check",
+    "check:w": "bunx --bun @biomejs/biome check --write",
     "preview": "vite preview"
   },
   "dependencies": {
