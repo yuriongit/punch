@@ -88,7 +88,8 @@ function RouteComponent() {
             </span>
           </Link>
           <Link
-            to="/start/test/punching"
+            to="/"
+            // to="/start/test/punching"
             className="hover:cursor-pointer p-1.5 px-5 rounded-md bg-purple-600 hover:bg-purple-500 text-white transition-all hover:rotate-z-3 hover:scale-105 gap-2 justify-center active:scale-95 w-fit duration-300 flex items-center uppercase font-bold pl-6"
           >
             Confirm <IconLockCheck stroke={2.75} size={21} />
