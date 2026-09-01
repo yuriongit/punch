@@ -1,5 +1,6 @@
 import { IconArrowBackUp, IconLockCheck } from "@tabler/icons-react"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { AnimatePresence, motion, type Variants } from "motion/react"
 import { useState } from "react"
 import { JsonEditor } from "../../../components/JsonEditor"
 
@@ -32,13 +33,37 @@ function RouteComponent() {
   const jsonExampleConfig = JSON.stringify(exampleConfig, null, 2)
   const [jsonInput, setJsonInput] = useState(jsonExampleConfig)
   const [error, setError] = useState<string | null>(null)
+  const [isFormatted, setIsFormatted] = useState(false)
+
+  const JSON_FORMAT_AND_ERRORS_VARIANTS: Variants = {
+    initial: {
+      x: 35,
+      opacity: 0,
+    },
+    animate: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: {
+      x: 35,
+      opacity: 0,
+    },
+  }
+
+  const handleJsonInputChange = (value: React.SetStateAction<string>) => {
+    setJsonInput(value)
+    setIsFormatted(false)
+    setError(null)
+  }
 
   const handleFormat = () => {
     try {
       const parsed = JSON.parse(jsonInput)
       setJsonInput(JSON.stringify(parsed, null, 2))
       setError(null)
+      setIsFormatted(true)
     } catch (err) {
+      setIsFormatted(false)
       if (err instanceof Error) {
         setError(err.message)
       }
@@ -63,19 +88,50 @@ function RouteComponent() {
             Format JSON
           </button>
         </div>
-        <div className="border-2 bg-transparent border-purple-600/50 px-1.5 pt-7.5 rounded-md justify-center">
-          <div className="flex bg-white flex-col rounded overflow-hidden">
+        <div className="border-2 bg-white border-purple-600/50 px-5 pt-9 rounded-md justify-center">
+          <div className="flex transition-all flex-col rounded overflow-hidden contain-content items-center">
             {/* Validation Feedback */}
             <JsonEditor
               size={500}
               jsonInput={jsonInput}
-              setJsonInput={setJsonInput}
+              setJsonInput={handleJsonInputChange}
             />
-            {error && (
-              <div className="p-3 mx-5 mb-5 text-xs bg-red-500/10 text-red-400 border rounded-md border-red-500/20 font-code">
-                Invalid JSON: {error}
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div
+                  key="error-banner"
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  variants={JSON_FORMAT_AND_ERRORS_VARIANTS}
+                  className="mb-10 absolute w-full max-w-208 flex justify-end"
+                >
+                  <div className="py-2 px-3.5 text-xs bg-red-500/15 text-red-700 border rounded-md border-red-500/15 font-code absolute w-fit max-w-2xs backdrop-blur-sm">
+                    <p className="font-bold">
+                      Invalid JSON:
+                      <span className="font-normal"> {error}</span>
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+              {isFormatted && !error && (
+                <motion.div
+                  key="success-banner"
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  variants={JSON_FORMAT_AND_ERRORS_VARIANTS}
+                  className="mb-10 absolute w-full max-w-208 flex justify-end"
+                >
+                  <div className="py-2 px-3.5 text-xs bg-green-500/15 text-green-700 border rounded-md border-green-500/15 font-code absolute w-fit max-w-2xs backdrop-blur-sm">
+                    <p className="font-bold">
+                      Valid JSON:
+                      <span className="font-normal"> Formatted! </span>
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         <div className="w-full flex justify-between items-center">
