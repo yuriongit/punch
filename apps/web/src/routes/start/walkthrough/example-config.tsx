@@ -43,8 +43,7 @@ function RouteComponent() {
             application.
           </p>
           <Link
-            to="/"
-            // to="/start/test/create-config"
+            to="/start/test/create-config"
             className="hover:cursor-pointer p-1.5 px-3.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white transition-all hover:rotate-z-3 hover:scale-105 gap-1.5 justify-center active:scale-95 w-fit duration-300 flex items-center mt-2.5"
           >
             <span className="ml-2.5">Next</span>
