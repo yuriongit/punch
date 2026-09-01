@@ -19,8 +19,7 @@ function RouteComponent() {
         </p>
       </div>
       <Link
-        to="/"
-        // to="/start/walkthrough/example-config"
+        to="/start/walkthrough/example-config"
         className="hover:cursor-pointer p-1.5 px-5 rounded-md bg-purple-600 hover:bg-purple-500 text-white transition-all hover:rotate-z-3 hover:scale-105 gap-2.5 justify-center active:scale-95 w-fit duration-300"
       >
         Okay
