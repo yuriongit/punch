@@ -26,8 +26,7 @@ function Index() {
             Visit Repo
           </a>
           <Link
-            to="/"
-            // to="/start/walkthrough/disclaimer"
+            to="/start/walkthrough/disclaimer"
             className="hover:cursor-pointer p-1.5 px-5 rounded-md w-full bg-purple-600 hover:bg-purple-500 text-white transition-all hover:rotate-z-2 hover:scale-105 flex items-center gap-2.5 justify-center uppercase active:scale-95 duration-300 font-bold"
           >
             <span className="pl-3">Start!</span>
