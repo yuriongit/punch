@@ -1,5 +1,7 @@
 import { IconCaretRightFilled } from "@tabler/icons-react"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { motion } from "motion/react"
+import { PAGE_SLIDE_UP_VARIANTS } from "../constants/animations"
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -7,7 +9,13 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <div className="flex-col p-10 flex min-w-full items-center min-h-screen text-center justify-between">
+    <motion.main
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={PAGE_SLIDE_UP_VARIANTS}
+      className="flex-col p-10 flex min-w-full items-center min-h-screen text-center justify-between"
+    >
       <div />
       <div className="flex flex-col gap-7.5 max-w-4xl">
         <div className="flex flex-col gap-2.5">
@@ -39,6 +47,6 @@ function Index() {
         concurrency and concurrent systems, and improving my skills with Docker,
         GitHub Actions, and Go.
       </p>
-    </div>
+    </motion.main>
   )
 }
