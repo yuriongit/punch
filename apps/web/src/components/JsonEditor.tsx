@@ -80,6 +80,7 @@ export const JsonEditor = ({ jsonInput, setJsonInput, size }: Props) => {
           vertical: "hidden",
           verticalScrollbarSize: 0,
         },
+        folding: false,
         insertSpaces: true,
         tabCompletion: "on",
         tabSize: 2,
