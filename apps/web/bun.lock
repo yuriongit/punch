@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "client",
+      "name": "@apps/web",
       "dependencies": {
         "@tabler/icons-react": "^3.46.0",
         "@tailwindcss/vite": "^4.3.3",
