@@ -6,6 +6,10 @@
   --font-code: "JetBrains Mono";
 }
 
+html {
+  scrollbar-width: none;
+}
+
 body {
   font-family:
     Zalando Sans,
