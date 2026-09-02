@@ -53,4 +53,5 @@ bun run preview # starts Vite preview server
 
 ## Status
 
-Work in progress.
+Work in progress: Frontend starting stage complete;
+API soon to be in development.
