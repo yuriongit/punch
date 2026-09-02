@@ -1,39 +1,53 @@
 # Punch
 
-Punch is a simple distributed load tester.
+Punch is a simple distributed HTTP load tester.
 
-It primarily serves as a project to learn Kubernetes, more on concurrency, and improving with Docker, GitHub Actions and Go.
+![Punch UI Preview](.github/images/preview.png)
 
-Additionally, I'd like to use this load-tester to test the quality of other software I'll be creating, alongside aggregating performance metrics from those tests.
+This is a project focused on learning Kubernetes, deepening
+my understanding of concurrency, and improving with
+Docker, GitHub Actions, and Go.
+
+Additionally, I'd like to use this load-tester to test
+the quality of other software I'll be creating,
+alongside aggregating performance metrics from those
+tests.
 
 ## Features
 
 ...
 
-## Technology 
+## Technology
 
-Note: Incomplete
-
-**Frontend**
-
-- **Tech:** React, TypeScript, Tailwind CSS, TanStack Router,
-- **Tooling:** Bun, Biome, Vite, Zod
-
-**API**
-
-- **Tech:** Go, Gin, Docker, Kubernetes
-- **Tooling:** golangci-lint, Go built-in tooling
+| Layer | Tools & Frameworks |
+| --- | --- |
+| **Frontend** | React, TypeScript, Tailwind CSS, Vite, Bun |
+| **API** | Go, Gin, Docker, Kubernetes |
+| **CI/CD & Hosting** | GitHub Actions, Vercel, Railway & GCP |
 
 ## Running locally
 
-**Clone the repo**:
+### Clone the repo
 
 ```bash
 git clone https://github.com/yuriongit/punch.git
 cd punch
 ```
 
-More coming soon, incomplete README...
+### Start Frontend
+
+```bash
+cd apps/web
+bun install --frozen-lockfile
+bun run build 
+bun run preview
+```
+
+### Start API
+
+```bash
+# Coming soon, API not yet implemented
+```
 
 ## Docs
 
@@ -41,4 +55,5 @@ More coming soon, incomplete README...
 
 ## Status
 
-Work in progress.
+Work in progress: Frontend starting stage complete;
+API soon to be in development.
