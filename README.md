@@ -36,9 +36,9 @@ cd punch
 
 ```bash
 cd apps/web
-bun ci # installs dependencies
-bun run build
-bun run preview # starts Vite preview server
+bun install --frozen-lockfile
+bun run build 
+bun run preview
 ```
 
 ### Start API
