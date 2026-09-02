@@ -38,7 +38,20 @@ git clone https://github.com/yuriongit/punch.git
 cd punch
 ```
 
-More coming soon, incomplete README...
+### Start Frontend
+
+```bash
+cd apps/web 
+bun ci # installs dependencies
+bun run build
+bun run preview # starts Vite preview server
+```
+
+### Start API
+
+```bash
+# Coming soon, API not yet implemented
+```
 
 ## Docs
 
