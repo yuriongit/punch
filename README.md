@@ -17,19 +17,11 @@ tests.
 
 ## Technology
 
-Note: Incomplete
-
-### Frontend
-
-- **Tech:** React, TypeScript, Tailwind CSS, TanStack Router,
-
-- **Tooling:** Bun, Biome, Vite, Zod
-
-### API
-
-- **Tech:** Go, Gin, Docker, Kubernetes
-
-- **Tooling:** golangci-lint, Go built-in tooling
+| Layer | Tools & Frameworks |
+| --- | --- |
+| **Frontend** | React, TypeScript, Tailwind CSS, Vite, Bun |
+| **API** | Go, Gin, Docker, Kubernetes |
+| **CI/CD & Hosting** | GitHub Actions, Vercel, Railway & GCP |
 
 ## Running locally
 
