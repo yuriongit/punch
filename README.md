@@ -15,23 +15,25 @@ tests.
 
 ...
 
-## Technology 
+## Technology
 
 Note: Incomplete
 
-**Frontend**
+### Frontend
 
 - **Tech:** React, TypeScript, Tailwind CSS, TanStack Router,
+
 - **Tooling:** Bun, Biome, Vite, Zod
 
-**API**
+### API
 
 - **Tech:** Go, Gin, Docker, Kubernetes
+
 - **Tooling:** golangci-lint, Go built-in tooling
 
 ## Running locally
 
-**Clone the repo**:
+### Clone the repo
 
 ```bash
 git clone https://github.com/yuriongit/punch.git
@@ -41,7 +43,7 @@ cd punch
 ### Start Frontend
 
 ```bash
-cd apps/web 
+cd apps/web
 bun ci # installs dependencies
 bun run build
 bun run preview # starts Vite preview server
