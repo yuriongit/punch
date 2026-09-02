@@ -1,6 +1,8 @@
 # Punch
 
-Punch is a simple distributed load tester.
+Punch is a simple distributed HTTP load tester.
+
+![Punch UI Preview](.github/images/preview.png)
 
 This is a project focused on learning Kubernetes, deepening
 my understanding of concurrency, and improving with
