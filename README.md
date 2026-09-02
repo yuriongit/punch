@@ -2,9 +2,14 @@
 
 Punch is a simple distributed load tester.
 
-It primarily serves as a project to learn Kubernetes, more on concurrency, and improving with Docker, GitHub Actions and Go.
+This is a project focused on learning Kubernetes, deepening
+my understanding of concurrency, and improving with
+Docker, GitHub Actions, and Go.
 
-Additionally, I'd like to use this load-tester to test the quality of other software I'll be creating, alongside aggregating performance metrics from those tests.
+Additionally, I'd like to use this load-tester to test
+the quality of other software I'll be creating,
+alongside aggregating performance metrics from those
+tests.
 
 ## Features
 
