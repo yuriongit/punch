@@ -1,0 +1,23 @@
+name: Punch - Web
+on:
+  push:
+    branches: [main]
+    paths: ['web/**']
+  pull_request:
+    branches: [main]
+    paths: ['web/**']
+defaults:
+  run:
+    working-directory: ./web
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+      - run: bun ci
+      - run: bunx biome ci
+      - run: bun run build
+      - run: bun test
