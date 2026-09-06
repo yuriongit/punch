@@ -1,4 +1,5 @@
 name: Punch - API
+
 on:
   push:
     branches: [main]
@@ -6,15 +7,27 @@ on:
   pull_request:
     branches: [main]
     paths-ignore: ['web/**']
+
 jobs:
   api:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.26.5'
+          go-version: 'go.mod'
           cache: true
-      - run: echo Lint
-      - run: go build -v
-      - run: go test -v
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.13
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
