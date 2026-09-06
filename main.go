@@ -1,3 +1,5 @@
+// Package main implements the functionality for the API Punch provides.
+// This includes an orchestrator and workers to complete the distributed HTTP load test.
 package main
 
 import (
