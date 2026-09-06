@@ -20,9 +20,15 @@ func HealthLive(c *gin.Context) {
 func main() {
 	// enable for production; disabled for debugging
 	// gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	r := gin.Default()
 
-	if err := router.Run(); err != nil {
+	// Health routes group
+	{
+		r.Group("/health")
+		r.GET("/live", HealthLive)
+	}
+
+	if err := r.Run(); err != nil {
 		panic(err)
 	}
 }
