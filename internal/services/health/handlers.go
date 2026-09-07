@@ -10,7 +10,7 @@ import (
 // Live checks whether the server is alive.
 func Live(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"ok": true,
+		"ok":   true,
 		"code": "HEALTHY",
 	})
 }
