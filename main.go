@@ -3,21 +3,11 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/yuriongit/punch/internal/infra"
+	"github.com/yuriongit/punch/internal/services/health"
 	"github.com/yuriongit/punch/internal/services/loadtest"
 )
-
-// Routes
-
-// HealthLive checks whether the server is alive.
-func HealthLive(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"ok": true,
-	})
-}
 
 func main() {
 	// enable for production; disabled for debugging
