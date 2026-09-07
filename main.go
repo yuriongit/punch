@@ -32,6 +32,10 @@ func main() {
 		r.Group("/health")
 		r.GET("/live", HealthLive)
 	}
+	{
+	  lt := r.Group("/load-test")
+		lt.POST("/register", loadtest.RegisterTest)
+	}
 
 	if err := r.Run(); err != nil {
 		panic(err)
