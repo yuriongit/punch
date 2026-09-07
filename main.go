@@ -33,7 +33,7 @@ func main() {
 		r.GET("/live", HealthLive)
 	}
 	{
-	  lt := r.Group("/load-test")
+		lt := r.Group("/load-test")
 		lt.POST("/register", loadtest.RegisterTest)
 	}
 

@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterTest(c *gin.Context) {
-  var config types.PunchConfig
+	var config types.PunchConfig
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -19,7 +19,7 @@ func RegisterTest(c *gin.Context) {
 	}
 
 	log.Println(config)
-	
+
 	testId, err := createTest(&config)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

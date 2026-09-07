@@ -17,7 +17,7 @@ func InitRedis() error {
 	})
 
 	// Test connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	return rdb.Ping(ctx).Err()
@@ -25,7 +25,7 @@ func InitRedis() error {
 
 // GetKey retrieves a value from Redis.
 func RdbGetKey(key string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	return rdb.Get(ctx, key).Result()
@@ -33,13 +33,13 @@ func RdbGetKey(key string) (string, error) {
 
 // SetKey stores a string key-value pair in Redis with a TTL.
 func RdbSetKey(key string, value interface{}, ttlSeconds int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	jsonData, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-	return rdb.Set(ctx, key, jsonData, time.Duration(ttlSeconds) * time.Second).Err()
+	return rdb.Set(ctx, key, jsonData, time.Duration(ttlSeconds)*time.Second).Err()
 }
