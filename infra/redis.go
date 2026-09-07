@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -35,5 +36,10 @@ func RdbSetKey(key string, value interface{}, ttlSeconds int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 	defer cancel()
 
-	return rdb.Set(ctx, key, value, time.Duration(ttlSeconds) * time.Second).Err()
+	jsonData, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+
+	return rdb.Set(ctx, key, jsonData, time.Duration(ttlSeconds) * time.Second).Err()
 }
