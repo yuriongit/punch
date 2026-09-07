@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yuriongit/punch/infra"
+	"github.com/yuriongit/punch/internal/services/loadtest"
 )
 
 // Routes
@@ -21,6 +23,9 @@ func main() {
 	// enable for production; disabled for debugging
 	// gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+	if err := infra.InitRedis(); err != nil {
+		panic(err)
+	}
 
 	// Health routes group
 	{
