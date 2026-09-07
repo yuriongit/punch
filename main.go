@@ -17,10 +17,10 @@ func main() {
 		panic(err)
 	}
 
-	// Health routes group
+	// Routes
 	{
-		r.Group("/health")
-		r.GET("/live", HealthLive)
+		he := r.Group("/health")
+		he.GET("/live", health.Live)
 	}
 	{
 		lt := r.Group("/load-test")
