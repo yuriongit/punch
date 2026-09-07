@@ -3,15 +3,32 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
+
+// Routes
+
+// HealthLive checks whether the server is alive.
+func HealthLive(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"ok": true,
+	})
+}
 
 func main() {
 	// enable for production; disabled for debugging
 	// gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	r := gin.Default()
 
-	if err := router.Run(); err != nil {
+	// Health routes group
+	{
+		r.Group("/health")
+		r.GET("/live", HealthLive)
+	}
+
+	if err := r.Run(); err != nil {
 		panic(err)
 	}
 }
