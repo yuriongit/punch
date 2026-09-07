@@ -31,7 +31,7 @@ func RdbGetKey(key string) (string, error) {
 }
 
 // SetKey stores a string key-value pair in Redis with a TTL.
-func RdbSetKey(key, value string, ttlSeconds int) error {
+func RdbSetKey(key string, value interface{}, ttlSeconds int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 	defer cancel()
 
