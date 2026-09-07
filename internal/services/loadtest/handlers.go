@@ -8,6 +8,7 @@ import (
 	"github.com/yuriongit/punch/shared/types"
 )
 
+// RegisterTest creates a test and persists it to Redis.
 func RegisterTest(c *gin.Context) {
 	var config types.PunchConfig
 	if err := c.ShouldBindJSON(&config); err != nil {
@@ -20,7 +21,7 @@ func RegisterTest(c *gin.Context) {
 
 	log.Println(config)
 
-	testId, err := createTest(&config)
+	testID, err := createTest(&config)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -31,6 +32,6 @@ func RegisterTest(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
-		"test_id": testId,
+		"test_id": testID,
 	})
 }

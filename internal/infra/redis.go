@@ -1,3 +1,4 @@
+// Package infra provides infrastructure-related functionality.
 package infra
 
 import (
@@ -23,7 +24,7 @@ func InitRedis() error {
 	return rdb.Ping(ctx).Err()
 }
 
-// GetKey retrieves a value from Redis.
+// RdbGetKey retrieves a value from Redis.
 func RdbGetKey(key string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -31,7 +32,7 @@ func RdbGetKey(key string) (string, error) {
 	return rdb.Get(ctx, key).Result()
 }
 
-// SetKey stores a string key-value pair in Redis with a TTL.
+// RdbSetKey stores a string key-value pair in Redis with a TTL.
 func RdbSetKey(key string, value interface{}, ttlSeconds int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

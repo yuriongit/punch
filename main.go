@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yuriongit/punch/infra"
+	"github.com/yuriongit/punch/internal/infra"
 	"github.com/yuriongit/punch/internal/services/loadtest"
 )
 
