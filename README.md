@@ -1,17 +1,10 @@
 # Punch
 
-Punch is a simple distributed HTTP load tester.
+Punch is a HTTP load tester available, as both a CLI tool and web app.
+Built to deepen my understanding of Docker, GitHub Actions, Go,
+and concurrent systems design.
 
 ![Punch UI Preview](.github/images/preview.png)
-
-This is a project focused on learning Kubernetes, deepening
-my understanding of concurrency, and improving with
-Docker, GitHub Actions, and Go.
-
-Additionally, I'd like to use this load-tester to test
-the quality of other software I'll be creating,
-alongside aggregating performance metrics from those
-tests.
 
 ## Features
 
@@ -19,11 +12,19 @@ tests.
 
 ## Technology
 
-| Layer | Tools & Frameworks |
+**Web App**
+
+| Layer | Tools |
 | --- | --- |
-| **Frontend** | React, TypeScript, Tailwind CSS, Vite, Bun |
-| **API** | Go, Gin, Docker, Kubernetes |
+| **Frontend** | React, TypeScript, Vite, Bun |
+| **API** | Go, Gin, Docker, Redis |
 | **CI/CD & Hosting** | GitHub Actions, Vercel, Railway & GCP |
+
+**CLI**
+
+| Layer | Tools |
+| --- | --- |
+| **API** | Go, Docker, Redis |
 
 ## Running locally
 
@@ -37,7 +38,7 @@ cd punch
 ### Start Frontend
 
 ```bash
-cd apps/web
+cd web
 bun install --frozen-lockfile
 bun run build 
 bun run preview
@@ -46,7 +47,7 @@ bun run preview
 ### Start API
 
 ```bash
-# Coming soon, API not yet implemented
+go run .
 ```
 
 ## Docs
@@ -55,5 +56,4 @@ bun run preview
 
 ## Status
 
-Work in progress: Frontend starting stage complete;
-API soon to be in development.
+Work in progress
