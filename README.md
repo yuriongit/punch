@@ -1,8 +1,8 @@
 # Punch
 
-Punch is a HTTP load tester available, as both a CLI tool and web app.
-Built to deepen my understanding of Docker, GitHub Actions, Go,
-and concurrent systems design.
+Punch is a HTTP load tester. Planned to be available as both a CLI tool 
+and web app. Being built to deepen my understanding of Docker, GitHub 
+Actions, and handling concurrency with Go.
 
 ![Punch UI Preview](.github/images/preview.png)
 
@@ -18,13 +18,13 @@ and concurrent systems design.
 | --- | --- |
 | **Frontend** | React, TypeScript, Vite, Bun |
 | **API** | Go, Gin, Docker, Redis |
-| **CI/CD & Hosting** | GitHub Actions, Vercel, Railway & GCP |
+| **CI/CD & Hosting** | GitHub Actions, Vercel, Railway / GCP |
 
 **CLI**
 
 | Layer | Tools |
 | --- | --- |
-| **API** | Go, Docker, Redis |
+| **API** | Go, BubbleTea, Docker, Redis |
 
 ## Running locally
 
