@@ -10,7 +10,7 @@ import (
 
 // RegisterTest creates a test and persists it to Redis.
 func RegisterTest(c *gin.Context) {
-	var config types.PunchConfig
+	var config shared.PunchConfig
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
