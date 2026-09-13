@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yuriongit/punch/shared/types"
+	"github.com/yuriongit/punch/internal/server/types"
 )
 
 // RegisterTest creates a test and persists it to Redis.
 func RegisterTest(c *gin.Context) {
-	var config shared.PunchConfig
+	var config server.PunchConfig
 	if err := c.ShouldBindJSON(&config); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
