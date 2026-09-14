@@ -11,22 +11,22 @@ var pWantStatusCode = &wantStatusCode
 var ClientData = ClientTestData{
 	TestID: GenerateTestID(),
 	Config: PunchConfig{
-		Protocol: "http",
-		Target:   "localhost:3000/api/lilify/v1",
+		Protocol:           "http",
+		Target:             "localhost:3000/api/lilify/v1",
 		GracePeriodPercent: 10,
 		Children: []Child{
 			{
 				Name:             "/urls?alias=123456",
 				Method:           "GET",
-				TotalRequests:    28,
-				BaseDurationSecs: 4,
+				TotalRequests:    20,
+				BaseDurationSecs: 2,
 				WantStatusCode:   pWantStatusCode,
 			},
 			{
 				Name:             "/urls?alias=bBKq8z",
 				Method:           "GET",
 				TotalRequests:    10,
-				BaseDurationSecs: 2,
+				BaseDurationSecs: 1,
 			},
 		},
 	},
