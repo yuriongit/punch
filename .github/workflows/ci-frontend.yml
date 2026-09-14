@@ -8,7 +8,7 @@ on:
     paths: ['web/**']
 defaults:
   run:
-    working-directory: ./web
+    working-directory: ./internal/server/web
 jobs:
   web:
     runs-on: ubuntu-latest
