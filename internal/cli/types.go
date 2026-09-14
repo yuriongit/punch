@@ -31,22 +31,22 @@ type Child struct {
 // PunchConfig defines the configuration for a load
 // test.
 type PunchConfig struct {
-	Protocol string  `json:"protocol" binding:"required,oneof=http https"`
-	Target   string  `json:"target" binding:"required,url"`
-	GracePeriodPercent uint8 `json:"grace_period_percent" binding:"required,gte=0,lte=50"`
-	Children []Child `json:"children" binding:"required,dive"`
+	Protocol           string  `json:"protocol" binding:"required,oneof=http https"`
+	Target             string  `json:"target" binding:"required,url"`
+	GracePeriodPercent uint8   `json:"grace_period_percent" binding:"required,gte=0,lte=50"`
+	Children           []Child `json:"children" binding:"required,dive"`
 }
 
-// WkrReqInfo defines what a worker needs to actually start
+// WorkerReqInfo defines what a worker needs to actually start
 // sending requests to the child the worker is assigned to.
 // Additionally, it allows the worker to determine if the
 // request's response resulted in the desired output specified
 // in the configuration.
-type WkrReqInfo struct {
-	Method         string
-	URL            string
-	ChildName      string
-	WantStatusCode uint16
+type WorkerReqInfo struct {
+	Method             string
+	URL                string
+	ChildName          string
+	WantStatusCode     uint16
 	GracePeriodPercent uint8
 }
 
@@ -77,10 +77,10 @@ type ChildCounts struct {
 	Suc    uint32
 }
 
-// CreateWkrResLogCounts is what allows for helper CreateLog
+// CreateWorkerResLogCounts is what allows for helper CreateLog
 // to accurately represent the requests that have been
 // fulfilled by each worker.
-type CreateWkrResLogCounts struct {
+type CreateWorkerResLogCounts struct {
 	GlobalReqCounter uint32
 	Curr             uint32
 }
@@ -109,10 +109,10 @@ const (
 // the client.
 type Log struct {
 	Lvl            LogLvl
-	WkrID          uint32
+	WorkerID       uint32
 	ChildID        uint32
 	ReqMethod      string
 	GotStatusCode  uint16
 	WantStatusCode uint16
-	Error string
+	Error          string
 }
