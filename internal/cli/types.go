@@ -85,6 +85,7 @@ type CreateWorkerResLogCounts struct {
 	Curr             uint32
 }
 
+// LogLvl represents the log severity level for worker execution logs.
 type LogLvl int
 
 // Load returns the string output of the enum

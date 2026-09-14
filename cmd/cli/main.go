@@ -187,11 +187,11 @@ func executeWorker(
 	case "POST":
 		panic("not yet implemented")
 	case "GET":
-		baseDurationSecs := time.Duration(baseDuration) * time.Second
-		gracePeriodSecs := (baseDurationSecs * time.Duration(req.GracePeriodPercent)) / 100
+		baseDuration := time.Duration(baseDuration) * time.Second
+		gracePeriod := (baseDuration * time.Duration(req.GracePeriodPercent)) / 100
 
 		// Maximum time allotted to send requests
-		maxTime := baseDurationSecs + gracePeriodSecs
+		maxTime := baseDuration + gracePeriod
 		deadline := time.Now().Add(maxTime)
 
 		// Request counters for each worker's child
@@ -236,7 +236,7 @@ func executeWorker(
 					ChildID:        childID,
 					ReqMethod:      req.Method,
 					WantStatusCode: req.WantStatusCode,
-					GotStatusCode:  uint16(resp.StatusCode),
+					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
 				}
 				c := cli.CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),
@@ -255,7 +255,7 @@ func executeWorker(
 					ChildID:        childID,
 					ReqMethod:      req.Method,
 					WantStatusCode: req.WantStatusCode,
-					GotStatusCode:  uint16(resp.StatusCode),
+					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
 				}
 				c := cli.CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),

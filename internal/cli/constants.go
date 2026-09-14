@@ -8,6 +8,10 @@ package cli
 
 var wantStatusCode uint16 = 404
 var pWantStatusCode = &wantStatusCode
+
+// ClientData is a temporary test configuration for Punch,
+// intended for development purposes, not for production
+// use.
 var ClientData = ClientTestData{
 	TestID: GenerateTestID(),
 	Config: PunchConfig{
