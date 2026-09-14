@@ -1,3 +1,4 @@
+// Package loadtest provides load testing services and handlers.
 package loadtest
 
 import (
