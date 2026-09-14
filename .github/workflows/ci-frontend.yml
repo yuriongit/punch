@@ -1,4 +1,4 @@
-name: Punch - Web
+name: Punch - Web App Frontend
 on:
   push:
     branches: [main]
