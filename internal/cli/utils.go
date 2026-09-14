@@ -19,14 +19,14 @@ func GenerateTestID() string {
 
 // SetupTestMetadata is a part of the initialization process:
 // It generates a unique test ID (with included retry-handling),
-// persists the ID and the clients configuration to Redis. 
+// persists the ID and the clients configuration to Redis.
 // Disclaimer: Currently unimplemented; SetupTestMetadata steps
 // are included in the body of the function.
 func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
   // Temporary use of variable ClientTestData 
   fmt.Printf("%s", d.TestID[0:0]) 
 	// Steps:
-	// 1. Create test ID w/ retry handling 
+	// 1. Create test ID w/ retry handling
 	// (Test ID format: TEST-12CHARACTERS)
 	// 2. Persist test ID and configuration to Redis
 	// 3. Return persisted test ID
