@@ -111,8 +111,8 @@ type Log struct {
 	Lvl            LogLvl
 	WkrID          uint32
 	ChildID        uint32
-	ChildName      string
 	ReqMethod      string
 	GotStatusCode  uint16
 	WantStatusCode uint16
+	Error string
 }
