@@ -8,6 +8,7 @@ package cli
 
 import (
 	"crypto/rand"
+	"fmt"
 )
 
 // GenerateTestID creates and returns a unique test ID of 12
@@ -21,7 +22,9 @@ func GenerateTestID() string {
 // persists the ID and the clients configuration to Redis. 
 // Disclaimer: Currently unimplemented; SetupTestMetadata steps
 // are included in the body of the function.
-func SetupTestMetadata(msg, d *ClientTestData) {
+func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
+  // Temporary use of variable ClientTestData 
+  fmt.Printf("%s", d.TestID[0:0]) 
 	// Steps:
 	// 1. Create test ID w/ retry handling 
 	// (Test ID format: TEST-12CHARACTERS)
@@ -29,4 +32,5 @@ func SetupTestMetadata(msg, d *ClientTestData) {
 	// 3. Return persisted test ID
 
 	// Note: Planned use.
+	return "", nil
 }
