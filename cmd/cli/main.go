@@ -11,31 +11,109 @@ import (
 	"github.com/yuriongit/punch/internal/cli"
 )
 
-func main() {
-	// Create temporary pointers for config and testID constants
-	config := &cli.ClientData.Config
-	testID := &cli.ClientData.TestID
-
-	// Create 2 WaitGroups, one for main and one for StreamLogs
-	var wg sync.WaitGroup
-	var logWg sync.WaitGroup
-
-	logWg.Add(1)
-
-	// Channel for logs
-	logChan := make(chan string, 125)
-
-	// Spawn StreamLogs goroutine that runs concurrently
-	go StreamLogs(logChan, &logWg)
-	RunTestWorkers(&wg, logChan, config, testID)
-
-	// When RunTestWorkers returns, close logChan
-	close(logChan)
-	logWg.Wait()
+// Global HTTP Client configured with timeouts and connection pooling
+// to prevent goroutine leaks and stalled requests during high load tests.
+var httpClient = &http.Client{
+	Timeout: 5 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        1000,
+		MaxIdleConnsPerHost: 100,
+		IdleConnTimeout:     90 * time.Second,
+	},
 }
 
-// StreamLogs ...
-func StreamLogs(
+// --------------------------
+// Helper Functions
+// Helper Functions
+
+// formatDuration dynamically formats a time.Duration into human-readable units
+// (nanoseconds, microseconds, milliseconds, seconds, minutes, hours).
+func formatDuration(d time.Duration) string {
+	switch {
+	case d < time.Microsecond:
+		ns := d.Nanoseconds()
+		if ns == 1 {
+			return "1 nanosecond"
+		}
+		return fmt.Sprintf("%d nanoseconds", ns)
+
+	case d < time.Millisecond:
+		us := float64(d.Nanoseconds()) / 1000.0
+		if us == 1.0 {
+			return "1 microsecond"
+		}
+		return fmt.Sprintf("%.2f microseconds", us)
+
+	case d < time.Second:
+		ms := float64(d.Nanoseconds()) / 1000000.0
+		if ms == 1.0 {
+			return "1 millisecond"
+		}
+		return fmt.Sprintf("%.2f milliseconds", ms)
+
+	case d < time.Minute:
+		s := d.Seconds()
+		if s == 1.0 {
+			return "1 second"
+		}
+		return fmt.Sprintf("%.2f seconds", s)
+
+	case d < time.Hour:
+		m := d.Minutes()
+		if m == 1.0 {
+			return "1 minute"
+		}
+		return fmt.Sprintf("%.2f minutes", m)
+
+	default:
+		h := d.Hours()
+		if h == 1.0 {
+			return "1 hour"
+		}
+		return fmt.Sprintf("%.2f hours", h)
+	}
+}
+
+func CreateWorkerLog(
+	logChan chan<- string,
+	l *cli.Log,
+	c *cli.CreateWorkerResLogCounts,
+	requestDuration time.Duration,
+) {
+	timeFormat := "15:04:05.000000"
+	formattedDur := formatDuration(requestDuration)
+
+	switch l.Lvl.Load() {
+	case "LOG-SUC", "LOG-ERR":
+		logChan <- fmt.Sprintf(
+			"%s [%s]-[Worker-%d]-[Child-#%d] | Total req #%d, my req #%d - Got %d, want %d | Req time: %s",
+			time.Now().Format(timeFormat),
+			l.Lvl.Load(),
+			l.WorkerID,
+			l.ChildID,
+			c.GlobalReqCounter,
+			c.Curr,
+			l.GotStatusCode,
+			l.WantStatusCode,
+			formattedDur,
+		)
+	case "LOG-FAT":
+		logChan <- fmt.Sprintf(
+			"%s [%s]-[Worker-%d]-[Child-#%d] | Total req #%d, my req #%d - Error: %s | Req time: %s",
+			time.Now().Format(timeFormat),
+			l.Lvl.Load(),
+			l.WorkerID,
+			l.ChildID,
+			c.GlobalReqCounter,
+			c.Curr,
+			l.Error,
+			formattedDur,
+		)
+	}
+}
+
+// StreamWorkerLogs streams logs to stdout concurrently.
+func StreamWorkerLogs(
 	logChan chan string,
 	logWg *sync.WaitGroup,
 ) {
@@ -45,207 +123,276 @@ func StreamLogs(
 	}
 }
 
-// RunTestWorkers ...
+// StreamInitTestLogs outputs initial benchmark headers.
+func StreamInitTestLogs(
+	logChan chan<- string,
+	testID *string,
+) {
+	logChan <- "Punch————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- fmt.Sprintf("[INIT] Starting TEST-%s", *testID)
+	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
+}
+
+type StreamPostTestLogsCounts struct {
+	Workers uint32
+	Global  uint32
+}
+
+type StreamPostTestData struct {
+	TestID             *string
+	TestDur            time.Duration
+	GracePeriodPercent uint8
+}
+
+// StreamPostTestLogs outputs final benchmark metrics.
+func StreamPostTestLogs(
+	logChan chan<- string,
+	d *StreamPostTestData,
+	c *StreamPostTestLogsCounts,
+) {
+	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- fmt.Sprintf("[SUCCESS] Completed TEST-%s successfully :)", *d.TestID)
+	logChan <- fmt.Sprintf("[LOG-MET] Test duration: %s w/ a grace period of %d%s", formatDuration(d.TestDur), d.GracePeriodPercent, "%")
+	logChan <- fmt.Sprintf("[LOG-MET] Total workers: %d", c.Workers)
+	logChan <- fmt.Sprintf("[LOG-MET] Fulfilled requests: %d", c.Global)
+	logChan <- "————————————————————————————————————————————————————————————————————————————————————————————————————Punch"
+}
+
+// Helper Functions
+// Helper Functions
+// --------------------------
+
+// --------------------------
+// Core Functions
+// Core Functions
+
+func executeWorker(
+	logChan chan<- string,
+	wg *sync.WaitGroup,
+	globalReqCount *atomic.Uint32,
+	workerID uint32,
+	childID uint32,
+	req cli.WorkerReqInfo,
+	targetRequests uint32,
+	baseDuration uint16,
+	workerReqDelay time.Duration,
+) {
+	defer wg.Done()
+
+	if targetRequests == 0 {
+		return
+	}
+
+	switch req.Method {
+	case "POST":
+		panic("not yet implemented")
+	case "GET":
+		baseDurationSecs := time.Duration(baseDuration) * time.Second
+		gracePeriodSecs := (baseDurationSecs * time.Duration(req.GracePeriodPercent)) / 100
+
+		// Maximum time allotted to send requests
+		maxTime := baseDurationSecs + gracePeriodSecs
+		deadline := time.Now().Add(maxTime)
+
+		// Request counters for each worker's child
+		counts := cli.ChildCounts{}
+
+		for time.Now().Before(deadline) {
+			// Pause to stretch requests over full BaseDuration
+			time.Sleep(workerReqDelay)
+
+			// Measure pure HTTP round-trip latency
+			requestStartTime := time.Now()
+			resp, err := httpClient.Get(req.URL)
+			elapsedTime := time.Since(requestStartTime)
+
+			counts.Curr++
+			globalReqCount.Add(1)
+
+			switch {
+			case err != nil:
+				counts.FatErr++
+
+				l := cli.Log{
+					Lvl:       cli.LogFat,
+					WorkerID:  workerID,
+					ChildID:   childID,
+					ReqMethod: req.Method,
+					Error:     err.Error(),
+				}
+				c := cli.CreateWorkerResLogCounts{
+					GlobalReqCounter: globalReqCount.Load(),
+					Curr:             counts.Curr,
+				}
+
+				CreateWorkerLog(logChan, &l, &c, elapsedTime)
+
+			case resp.StatusCode == int(req.WantStatusCode):
+				counts.Suc++
+
+				l := cli.Log{
+					Lvl:            cli.LogSuc,
+					WorkerID:       workerID,
+					ChildID:        childID,
+					ReqMethod:      req.Method,
+					WantStatusCode: req.WantStatusCode,
+					GotStatusCode:  uint16(resp.StatusCode),
+				}
+				c := cli.CreateWorkerResLogCounts{
+					GlobalReqCounter: globalReqCount.Load(),
+					Curr:             counts.Curr,
+				}
+
+				CreateWorkerLog(logChan, &l, &c, elapsedTime)
+				_ = resp.Body.Close()
+
+			default:
+				counts.RegErr++
+
+				l := cli.Log{
+					Lvl:            cli.LogErr,
+					WorkerID:       workerID,
+					ChildID:        childID,
+					ReqMethod:      req.Method,
+					WantStatusCode: req.WantStatusCode,
+					GotStatusCode:  uint16(resp.StatusCode),
+				}
+				c := cli.CreateWorkerResLogCounts{
+					GlobalReqCounter: globalReqCount.Load(),
+					Curr:             counts.Curr,
+				}
+
+				CreateWorkerLog(logChan, &l, &c, elapsedTime)
+				_ = resp.Body.Close()
+			}
+
+			// Stop when worker fulfills assigned quota
+			if counts.Curr == targetRequests {
+				return
+			}
+		}
+	}
+}
+
 func RunTestWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
 	config *cli.PunchConfig,
 	testID *string,
 ) {
-  // Output initializing logs with line break
-  logChan<-"Punch------------------------------------------------------------------"
-	logChan <- fmt.Sprintf("[INIT] Initializing load test for TEST-%s", *testID)
-	logChan<-"------------------------------------------------------------------Punch"
-	
-	var wkrCount atomic.Uint32
+	StreamInitTestLogs(logChan, testID)
+
+	var workerCount atomic.Uint32
 	var globalReqCount atomic.Uint32
+	var globalWorkerCount atomic.Uint32
+
 	testStartTime := time.Now()
-	
-	// Concurrently run requests against each child
-	for _, v := range config.Children {
-		rps := float32(v.TotalRequests) / float32(v.BaseDurationSecs)
-		numWkrs := uint32(rps)
-		if numWkrs < 1 {
-			numWkrs = 1
+
+	for childID, child := range config.Children {
+		if child.BaseDurationSecs == 0 || child.TotalRequests == 0 {
+			continue
 		}
 
-		reqsPerWkr := v.TotalRequests / uint32(numWkrs)
-		
-		// 3. Calculate delay per worker to stretch requests over full DurationSecs
-		// E.g, child #1: 10s - 10 reqs/worker = request/1s
-		wkrReqDelayMs := (float64(v.BaseDurationSecs) / float64(reqsPerWkr)) * 1000
-		
-		var globalWkrCount atomic.Uint32
+		requestsPerSecond := float32(child.TotalRequests) / float32(child.BaseDurationSecs)
+		numWorkers := uint32(requestsPerSecond)
+		if numWorkers < 1 {
+			numWorkers = 1
+		}
 
-		// Handle optional field
-		if v.WantStatusCode == nil {
+		// Cap workers to total requests if total requests is smaller than numWorkers
+		if numWorkers > child.TotalRequests {
+			numWorkers = child.TotalRequests
+		}
+
+		// Calculate base distribution and remainders so no requests drop out
+		baseReqsPerWorker := child.TotalRequests / numWorkers
+		remainderReqs := child.TotalRequests % numWorkers
+
+		if child.WantStatusCode == nil {
 			childExpectedStatus := uint16(200)
-			v.WantStatusCode = &childExpectedStatus
+			child.WantStatusCode = &childExpectedStatus
 		}
 
-		URL := fmt.Sprintf("%s://%s%s", config.Protocol, config.Target, v.Name)
+		URL := fmt.Sprintf("%s://%s%s", config.Protocol, config.Target, child.Name)
 
-		for j := uint32(0); j < numWkrs; j++ {
-		  wkrCount.Add(1)
-    
+		for i := uint32(0); i < numWorkers; i++ {
+			reqsForThisWorker := baseReqsPerWorker
+			if i < remainderReqs {
+				reqsForThisWorker++
+			}
+
+			// Delay calculation per request to fill BaseDurationSecs properly
+			var workerReqDelay time.Duration
+			if reqsForThisWorker > 0 {
+				workerReqDelay = time.Duration((float64(child.BaseDurationSecs) / float64(reqsForThisWorker)) * float64(time.Second))
+			}
+
+			workerCount.Add(1)
 			wg.Add(1)
+
+			req := cli.WorkerReqInfo{
+				Method:             child.Method,
+				URL:                URL,
+				ChildName:          child.Name,
+				WantStatusCode:     *child.WantStatusCode,
+				GracePeriodPercent: config.GracePeriodPercent,
+			}
+
+			workerID := globalWorkerCount.Add(1)
 
 			go executeWorker(
 				logChan,
 				wg,
 				&globalReqCount,
-				globalWkrCount.Add(1),
-				cli.TestReqInfo{
-					Method:         v.Method,
-					URL:            URL,
-					ChildName:      v.Name,
-					WantStatusCode: *v.WantStatusCode,
-				},
-				reqsPerWkr,
-				v.BaseDurationSecs,
-				wkrReqDelayMs,
+				workerID,
+				uint32(childID+1),
+				req,
+				reqsForThisWorker,
+				child.BaseDurationSecs,
+				workerReqDelay,
 			)
 		}
 	}
 
 	wg.Wait()
-	
-	// Output test completion with line break
-	logChan<-"Punch------------------------------------------------------------------"
-	logChan<-"[SUCCESS] Completed load test successfully!"
-	logChan<-fmt.Sprintf("[LOG-MET] Total test duration: %.4fs", time.Since(testStartTime).Seconds())
-	logChan<-fmt.Sprintf("[LOG-MET] Total workers: %d", wkrCount.Load())
-	logChan<-fmt.Sprintf("[LOG-MET] Fulfilled requests: %d", globalReqCount.Load())
-	logChan<-fmt.Sprintf("[LOG-MET] Fulfilled requests: %d", globalReqCount.Load())
-	logChan<-"------------------------------------------------------------------Punch\n"
-}
+	testDuration := time.Since(testStartTime)
 
-// CreateLog outputs
-func CreateLog(logChan chan<- string, l cli.Log, c *cli.CreateLogCounts) {
-  switch l.Lvl.Load() {
-    case "LOG-SUC":
-    logChan <- fmt.Sprintf(
-      "%s [%s] %d %s %s | Global-Req #%d / Wkr-Req #%d | Got %d, want %d", 
-      time.Now().Format(time.RFC3339), 
-      l.Lvl.Load(), 
-      l.WkrID,
-      l.ReqMethod,
-      l.ChildName,
-      c.GlobalCurrReqAmt.Load(),
-      c.WkrCurrReqAmt,
-      l.GotStatusCode,
-      l.WantStatusCode,
-    )
-  }
-  // switch l.Lvl.Load() {
-  //   case "LOG-FIN":
-  //   logChan<-fmt.Sprintf(
-  //     "[%s] WKR-%d - %s %s | Completed %d requests - Fatal %d / Error: %d / Success: %d | My duration: %.4f seconds", time.Now().Format(time.RFC3339Nano), l.WkrID,
-  //     )
-  // }
-}
-
-// executeWorker ...
-func executeWorker(
-	logChan chan<- string,
-	wg *sync.WaitGroup,
-	globalReqCount *atomic.Uint32,
-	wkrID uint32,
-	req cli.TestReqInfo,
-	reqsToDo uint32,
-	baseDur uint16,
-	wkrReqDelayMs float64,
-) {
-	defer wg.Done()
-
-	switch req.Method {
-	case "POST":
-		panic("not yet implemented")
-	case "GET":
-		bufferDuration := float32(baseDur) * 0.25
-		deadline := time.Now().Add((time.Duration(baseDur) * time.Second) + time.Duration(bufferDuration))
-
-		reqCounts := cli.ChildCounts{}
-
-		resStart := time.Now()
-		for time.Now().Before(deadline) {
-  		var resEnd time.Duration
-			resp, err := http.Get(req.URL)
-			
-			
-			time.Sleep(time.Duration(wkrReqDelayMs) * time.Millisecond)
-
-			reqCounts.Curr++
-			globalReqCount.Add(1)
-			
-			switch {
-			case reqCounts.Curr == reqsToDo:
-				time.Sleep((time.Duration(bufferDuration) * time.Second ) / 2)
-				
-				// logWithTime(logChan, "LOG-FIN", fmt.Sprintf("WKR-%d - %s %s | Completed %d requests - Fatal %d / Error: %d / Success: %d | My duration: %.4f seconds", 
-				// wkrID,
-				// req.Method,
-				// req.ChildName,
-				// localCounts.Curr,
-				// localCounts.FatErr,
-				// localCounts.RegErr,
-				// localCounts.Success,
-				// testEnd.Seconds(),
-				// ))
-				
-				return
-			case err != nil:
-				reqCounts.FatErr++
-				time.Since(resStart)
-				
-				h, m, s := time.Now().Clock()
-				
-				logChan <- fmt.Sprintf(
-					"%s [LOG-FAT] WRK-%d | Global-Req #%d / Wkr-Req #%d - %s %s | Res-Time: %d | Response: '%s'",
-					fmt.Sprintf("%d:%d:%d", h,m,s),
-					wkrID,
-					globalReqCount.Load(),
-					reqCounts.Curr,
-					req.Method,
-					req.ChildName,
-					err.Error(),
-					resEnd,
-				)
-			case resp.StatusCode == int(req.WantStatusCode):
-				reqCounts.Suc++
-				
-				h, m, s := time.Now().Clock()
-
-				// successful request
-				logChan <- fmt.Sprintf(
-					"%s [LOG-SUC] WRK-%d | Global-Req #%d / Wkr-Req #%d - %s %s | got %d, want %d",
-					fmt.Sprintf("%d:%d:%d", h,m,s),
-					wkrID,
-					globalReqCount.Load(),
-					reqCounts.Curr,
-					req.Method,
-					req.ChildName,
-					resp.StatusCode,
-					req.WantStatusCode,
-				)
-
-				_ = resp.Body.Close()
-			default:
-				reqCounts.RegErr++
-
-				logChan <- fmt.Sprintf(
-					"[LOG-ERR] WRK-%d | Global-Req #%d / Wkr-Req #%d - %s %s | got %d, want %d",
-					wkrID,
-					globalReqCount.Load(),
-					reqCounts.Curr,
-					req.Method,
-					req.ChildName,
-					resp.StatusCode,
-					req.WantStatusCode,
-				)
-
-				_ = resp.Body.Close()
-			}
-		}
+	postTestData := StreamPostTestData{testID, time.Duration(testDuration), config.GracePeriodPercent}
+	counts := StreamPostTestLogsCounts{
+		Workers: workerCount.Load(),
+		Global:  globalReqCount.Load(),
 	}
+
+	StreamPostTestLogs(
+		logChan,
+		&postTestData,
+		&counts,
+	)
 }
+
+func main() {
+	config := &cli.ClientData.Config
+	testID := &cli.ClientData.TestID
+
+	var wg sync.WaitGroup
+	var logWg sync.WaitGroup
+
+	logWg.Add(1)
+
+	// Buffer channel to prevent blocking worker goroutines
+	logChanLen := uint32(50)
+	for _, v := range config.Children {
+		logChanLen += v.TotalRequests
+	}
+	logChan := make(chan string, logChanLen)
+
+	go StreamWorkerLogs(logChan, &logWg)
+	RunTestWorkers(&wg, logChan, config, testID)
+
+	close(logChan)
+	logWg.Wait()
+}
+
+// Core Functions
+// Core Functions
+// --------------------------
