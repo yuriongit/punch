@@ -33,6 +33,7 @@ type Child struct {
 type PunchConfig struct {
 	Protocol string  `json:"protocol" binding:"required,oneof=http https"`
 	Target   string  `json:"target" binding:"required,url"`
+	GracePeriodPercent uint8 `json:"grace_period_percent" binding:"required,gte=0,lte=50"`
 	Children []Child `json:"children" binding:"required,dive"`
 }
 
@@ -46,6 +47,7 @@ type WkrReqInfo struct {
 	URL            string
 	ChildName      string
 	WantStatusCode uint16
+	GracePeriodPercent uint8
 }
 
 // ClientTestData defines the initial data required to
