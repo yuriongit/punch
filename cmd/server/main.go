@@ -4,9 +4,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/yuriongit/punch/internal/infra"
-	"github.com/yuriongit/punch/internal/services/health"
-	"github.com/yuriongit/punch/internal/services/loadtest"
+	"github.com/yuriongit/punch/internal/server/infra"
+	"github.com/yuriongit/punch/internal/server/services/health"
+	"github.com/yuriongit/punch/internal/server/services/loadtest"
 )
 
 func main() {

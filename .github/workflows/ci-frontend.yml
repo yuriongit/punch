@@ -1,4 +1,4 @@
-name: Punch - Web
+name: Punch - Web App Frontend
 on:
   push:
     branches: [main]
@@ -8,9 +8,9 @@ on:
     paths: ['web/**']
 defaults:
   run:
-    working-directory: ./web
+    working-directory: ./internal/server/web
 jobs:
-  web:
+  web-app:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

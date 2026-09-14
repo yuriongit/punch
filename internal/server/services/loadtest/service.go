@@ -6,11 +6,11 @@ import (
 	"errors"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yuriongit/punch/internal/infra"
-	punchTypes "github.com/yuriongit/punch/shared/types"
+	"github.com/yuriongit/punch/internal/server/infra"
+	"github.com/yuriongit/punch/internal/server/types"
 )
 
-func createTest(config *punchTypes.PunchConfig) (string, error) {
+func createTest(config *server.PunchConfig) (string, error) {
 	const maxRetries uint8 = 5
 
 	for i := 0; i < int(maxRetries); i++ {
