@@ -4,7 +4,7 @@ package cli
 var wantStatusCode uint16 = 404
 var pWantStatusCode = &wantStatusCode
 var ClientData = ClientTestData{
-	TestID: "12CHARACTERS",
+	TestID: GenerateTestID(),
 	Config: PunchConfig{
 		Protocol: "http",
 		Target:   "localhost:3000/api/lilify/v1",
