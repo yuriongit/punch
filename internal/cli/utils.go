@@ -23,8 +23,8 @@ func GenerateTestID() string {
 // Disclaimer: Currently unimplemented; SetupTestMetadata steps
 // are included in the body of the function.
 func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
-  // Temporary use of variable ClientTestData 
-  fmt.Printf("%s", d.TestID[0:0]) 
+	// Temporary use of variable ClientTestData
+	fmt.Printf("%s", d.TestID[0:0])
 	// Steps:
 	// 1. Create test ID w/ retry handling
 	// (Test ID format: TEST-12CHARACTERS)

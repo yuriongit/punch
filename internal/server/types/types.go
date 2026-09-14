@@ -1,4 +1,4 @@
-// Package server includes the types and structs needed 
+// Package server includes the types and structs needed
 // for the functionality of Punch's web app.
 package server
 
