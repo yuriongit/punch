@@ -13,6 +13,7 @@ var ClientData = ClientTestData{
 	Config: PunchConfig{
 		Protocol: "http",
 		Target:   "localhost:3000/api/lilify/v1",
+		GracePeriodPercent: 10,
 		Children: []Child{
 			{
 				Name:             "/urls?alias=123456",
