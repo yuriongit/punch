@@ -1,4 +1,4 @@
-name: Punch - API
+name: Punch
 
 on:
   push:
