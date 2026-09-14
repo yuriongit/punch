@@ -10,7 +10,7 @@ defaults:
   run:
     working-directory: ./internal/server/web
 jobs:
-  web:
+  web-app:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

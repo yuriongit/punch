@@ -1,4 +1,4 @@
-name: Punch
+name: Punch - Server & CLI 
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
     paths-ignore: ['web/**']
 
 jobs:
-  api:
+  server-and-cli:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
