@@ -9,7 +9,8 @@ import (
 	"github.com/yuriongit/punch/internal/server/types"
 )
 
-// RegisterTest creates a test and persists it to Redis.
+// RegisterTest creates a test with a test ID and the provided config,
+// persisted to Redis.
 func RegisterTest(c *gin.Context) {
 	var config server.PunchConfig
 	if err := c.ShouldBindJSON(&config); err != nil {
