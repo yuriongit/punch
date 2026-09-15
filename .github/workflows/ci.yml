@@ -1,15 +1,13 @@
-name: Punch - Server & CLI 
+name: Punch - CLI
 
 on:
   push:
     branches: [main]
-    paths-ignore: ['web/**']
   pull_request:
     branches: [main]
-    paths-ignore: ['web/**']
 
 jobs:
-  server-and-cli:
+  cli:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
