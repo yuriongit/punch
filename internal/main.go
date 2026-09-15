@@ -1,5 +1,5 @@
 // Package main is the entry point of Punch's CLI tool.
-package main
+package cli
 
 import (
 	"fmt"
@@ -7,8 +7,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/yuriongit/punch/internal/cli"
 )
 
 // Global HTTP Client configured with timeouts and connection pooling
@@ -76,8 +74,8 @@ func formatDuration(d time.Duration) string {
 
 func CreateWorkerLog(
 	logChan chan<- string,
-	l *cli.Log,
-	c *cli.CreateWorkerResLogCounts,
+	l *Log,
+	c *CreateWorkerResLogCounts,
 	requestDuration time.Duration,
 ) {
 	timeFormat := "15:04:05.000000"
@@ -172,7 +170,7 @@ func executeWorker(
 	globalReqCount *atomic.Uint32,
 	workerID uint32,
 	childID uint32,
-	req cli.WorkerReqInfo,
+	req WorkerReqInfo,
 	targetRequests uint32,
 	baseDuration uint16,
 	workerReqDelay time.Duration,
@@ -195,7 +193,7 @@ func executeWorker(
 		deadline := time.Now().Add(maxTime)
 
 		// Request counters for each worker's child
-		counts := cli.ChildCounts{}
+		counts := ChildCounts{}
 
 		for time.Now().Before(deadline) {
 			// Pause to stretch requests over full BaseDuration
@@ -213,14 +211,14 @@ func executeWorker(
 			case err != nil:
 				counts.FatErr++
 
-				l := cli.Log{
-					Lvl:       cli.LogFat,
+				l := Log{
+					Lvl:       LogFat,
 					WorkerID:  workerID,
 					ChildID:   childID,
 					ReqMethod: req.Method,
 					Error:     err.Error(),
 				}
-				c := cli.CreateWorkerResLogCounts{
+				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),
 					Curr:             counts.Curr,
 				}
@@ -230,15 +228,15 @@ func executeWorker(
 			case resp.StatusCode == int(req.WantStatusCode):
 				counts.Suc++
 
-				l := cli.Log{
-					Lvl:            cli.LogSuc,
+				l := Log{
+					Lvl:            LogSuc,
 					WorkerID:       workerID,
 					ChildID:        childID,
 					ReqMethod:      req.Method,
 					WantStatusCode: req.WantStatusCode,
 					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
 				}
-				c := cli.CreateWorkerResLogCounts{
+				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),
 					Curr:             counts.Curr,
 				}
@@ -249,15 +247,15 @@ func executeWorker(
 			default:
 				counts.RegErr++
 
-				l := cli.Log{
-					Lvl:            cli.LogErr,
+				l := Log{
+					Lvl:            LogErr,
 					WorkerID:       workerID,
 					ChildID:        childID,
 					ReqMethod:      req.Method,
 					WantStatusCode: req.WantStatusCode,
 					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
 				}
-				c := cli.CreateWorkerResLogCounts{
+				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),
 					Curr:             counts.Curr,
 				}
@@ -277,7 +275,7 @@ func executeWorker(
 func RunTestWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
-	config *cli.PunchConfig,
+	config *PunchConfig,
 	testID *string,
 ) {
 	StreamInitTestLogs(logChan, testID)
@@ -330,7 +328,7 @@ func RunTestWorkers(
 			workerCount.Add(1)
 			wg.Add(1)
 
-			req := cli.WorkerReqInfo{
+			req := WorkerReqInfo{
 				Method:             child.Method,
 				URL:                URL,
 				ChildName:          child.Name,
@@ -371,12 +369,12 @@ func RunTestWorkers(
 }
 
 func main() {
-	pConfig, err := cli.ParsePunchConfig("./")
+	pConfig, err := ParsePunchConfig("./")
 	if err != nil {
 		panic(err)
 	}
 
-	testID := &cli.ClientData.TestID
+	testID := &ClientData.TestID
 
 	var wg sync.WaitGroup
 	var logWg sync.WaitGroup
