@@ -37,36 +37,36 @@ func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
 	return "", nil
 }
 
-// ParsePunchConfig reads, parses, and returns the Punch 
+// ParsePunchConfig reads, parses, and returns the Punch
 // configuration file.
 func ParsePunchConfig(directory string) (PunchConfig, error) {
-  // Attempt to change directory
-  err := os.Chdir(directory)
-  if err != nil {
-    return PunchConfig{}, fmt.Errorf(
-      "failed to change directory to /%s: %s", 
-      directory, 
-      err.Error(),
-    )
-  }
-  // Attempt to read Punch configuration file
-  file, err := os.ReadFile(PunchConfigFileName)
-  if err != nil {
-    return PunchConfig{}, fmt.Errorf(
-      "failed to read Punch configuration: %s", 
-      err.Error(),
-    )
-  }
-  
-  var config PunchConfig
-  // Attempt to parse Punch Configuration file
-  if err := json.Unmarshal(file, &config); err != nil {
-    return PunchConfig{}, fmt.Errorf( 
-      "failed to unmarshal %s: %s", 
-      PunchConfigFileName, 
-      err.Error(),
-    )
-  }
-  
-  return config, nil
+	// Attempt to change directory
+	err := os.Chdir(directory)
+	if err != nil {
+		return PunchConfig{}, fmt.Errorf(
+			"failed to change directory to /%s: %w",
+			directory,
+			err,
+		)
+	}
+	// Attempt to read Punch configuration file
+	file, err := os.ReadFile(PunchConfigFileName)
+	if err != nil {
+		return PunchConfig{}, fmt.Errorf(
+			"no configuration file provided: %w",
+			err,
+		)
+	}
+
+	var config PunchConfig
+	// Attempt to parse Punch Configuration file
+	if err := json.Unmarshal(file, &config); err != nil {
+		return PunchConfig{}, fmt.Errorf(
+			"failed to unmarshal %s: %w",
+			PunchConfigFileName,
+			err,
+		)
+	}
+
+	return config, nil
 }
