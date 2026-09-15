@@ -1,30 +1,22 @@
 # Punch
 
-Punch is a HTTP load tester. Planned to be available as both a CLI tool 
-and web app. Being built to deepen my understanding of Docker, GitHub 
-Actions, and handling concurrency with Go.
-
-![Punch UI Preview](.github/images/preview.png)
+Punch is a customizable, simple, and lightweight HTTP load testing CLI-tool.
+Available as both a CLI tool. It's language agnostic, as it's meant to be 
+used for anything or project.
 
 ## Features
 
 ...
 
-## Technology
+## Infrastructure
 
-**Web App**
-
-| Layer | Tools |
+| Layer | Tool |
 | --- | --- |
-| **Frontend** | React, TypeScript, Vite, Bun |
-| **API** | Go, Gin, Docker, Redis |
-| **CI/CD & Hosting** | GitHub Actions, Vercel, Railway / GCP |
-
-**CLI**
-
-| Layer | Tools |
-| --- | --- |
-| **API** | Go, BubbleTea, Docker, Redis |
+| Main | Go, Cobra |
+| Data | Redis |
+| Containerzation | Docker |
+| CI/CD | GitHub Actions |
+| Tooling | golangci-lint, built-in Go tools |
 
 ## Running locally
 
@@ -35,24 +27,32 @@ git clone https://github.com/yuriongit/punch.git
 cd punch
 ```
 
-### Start Frontend
+### Start Punch
+
+punch command
 
 ```bash
-cd web
-bun install --frozen-lockfile
-bun run build 
-bun run preview
+# use of punch command
+go build
+go install
+punch
 ```
 
-### Start API
+---
+
+Build and run
 
 ```bash
+# use of local executable
+go build 
+./punch
+# or
 go run .
 ```
 
 ## Docs
 
-...
+[todo.md](todo.md)
 
 ## Status
 
