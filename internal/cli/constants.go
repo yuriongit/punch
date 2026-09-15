@@ -9,6 +9,10 @@ package cli
 var wantStatusCode uint16 = 404
 var pWantStatusCode = &wantStatusCode
 
+// PunchConfigFileName holds the constant value of Punch's
+// configuration file name.
+var PunchConfigFileName = "punch.json"
+
 // ClientData is a temporary test configuration for Punch,
 // intended for development purposes, not for production
 // use.

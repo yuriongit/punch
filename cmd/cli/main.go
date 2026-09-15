@@ -371,7 +371,11 @@ func RunTestWorkers(
 }
 
 func main() {
-	config := &cli.ClientData.Config
+	pConfig, err := cli.ParsePunchConfig("./")
+	if err != nil {
+		panic(err)
+	}
+
 	testID := &cli.ClientData.TestID
 
 	var wg sync.WaitGroup
@@ -381,13 +385,13 @@ func main() {
 
 	// Buffer channel to prevent blocking worker goroutines
 	logChanLen := uint32(50)
-	for _, v := range config.Children {
+	for _, v := range pConfig.Children {
 		logChanLen += v.TotalRequests
 	}
 	logChan := make(chan string, logChanLen)
 
 	go StreamWorkerLogs(logChan, &logWg)
-	RunTestWorkers(&wg, logChan, config, testID)
+	RunTestWorkers(&wg, logChan, pConfig, testID)
 
 	close(logChan)
 	logWg.Wait()

@@ -8,7 +8,9 @@ package cli
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
+	"os"
 )
 
 // GenerateTestID creates and returns a unique test ID of 12
@@ -33,4 +35,38 @@ func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
 
 	// Note: Planned use.
 	return "", nil
+}
+
+// ParsePunchConfig reads, parses, and returns the Punch
+// configuration file.
+func ParsePunchConfig(directory string) (*PunchConfig, error) {
+	// Attempt to change directory
+	err := os.Chdir(directory)
+	if err != nil {
+		return &PunchConfig{}, fmt.Errorf(
+			"failed to change directory to /%s: %w",
+			directory,
+			err,
+		)
+	}
+	// Attempt to read Punch configuration file
+	file, err := os.ReadFile(PunchConfigFileName)
+	if err != nil {
+		return &PunchConfig{}, fmt.Errorf(
+			"no configuration file provided: %w",
+			err,
+		)
+	}
+
+	var config PunchConfig
+	// Attempt to parse Punch Configuration file
+	if err := json.Unmarshal(file, &config); err != nil {
+		return &PunchConfig{}, fmt.Errorf(
+			"failed to unmarshal %s: %w",
+			PunchConfigFileName,
+			err,
+		)
+	}
+
+	return &config, nil
 }
