@@ -1,5 +1,11 @@
-// Package cli is the entry point of Punch's CLI tool.
-package cli
+/*
+Package worker is responsible for carrying out the functionality
+of sending HTTP requests to the configured 'target' and 'children'
+in the Punch configuration file.
+relies on. Workers are able to make HTTP requests both in parallel
+and with concurrency.
+*/
+package worker
 
 import (
 	"fmt"
@@ -7,10 +13,16 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/yuriongit/punch/internal/config"
 )
 
-// Global HTTP Client configured with timeouts and connection pooling
-// to prevent goroutine leaks and stalled requests during high load tests.
+/*
+	Global HTTP Client configured with timeouts and connection
+
+pooling to prevent goroutine leaks and stalled requests during
+high load tests.
+*/
 var httpClient = &http.Client{
 	Timeout: 5 * time.Second,
 	Transport: &http.Transport{
@@ -20,13 +32,15 @@ var httpClient = &http.Client{
 	},
 }
 
-// --------------------------
-// Helper Functions
-// Helper Functions
+/*
+	formatDuration dynamically formats a time.Duration into
 
-// formatDuration dynamically formats a time.Duration into human-readable units
-// (nanoseconds, microseconds, milliseconds, seconds, minutes, hours).
-func formatDuration(d time.Duration) string {
+human-readable units (nanoseconds, microseconds, milliseconds,
+seconds, minutes, hours).
+*/
+func formatDuration(
+	d time.Duration,
+) string {
 	switch {
 	case d < time.Microsecond:
 		ns := d.Nanoseconds()
@@ -72,7 +86,8 @@ func formatDuration(d time.Duration) string {
 	}
 }
 
-func CreateWorkerLog(
+// createWorkerLog ...
+func createWorkerLog(
 	logChan chan<- string,
 	l *Log,
 	c *CreateWorkerResLogCounts,
@@ -121,8 +136,8 @@ func StreamWorkerLogs(
 	}
 }
 
-// StreamInitTestLogs outputs initial benchmark headers.
-func StreamInitTestLogs(
+// streamInitTestLogs outputs initial benchmark headers.
+func streamInitTestLogs(
 	logChan chan<- string,
 	testID *string,
 ) {
@@ -131,19 +146,21 @@ func StreamInitTestLogs(
 	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
 }
 
+// StreamPostTestLogsCounts ...
 type StreamPostTestLogsCounts struct {
 	Workers uint32
 	Global  uint32
 }
 
+// StreamPostTestData ...
 type StreamPostTestData struct {
 	TestID             *string
 	TestDur            time.Duration
 	GracePeriodPercent uint8
 }
 
-// StreamPostTestLogs outputs final benchmark metrics.
-func StreamPostTestLogs(
+// streamPostTestLogs outputs final benchmark metrics.
+func streamPostTestLogs(
 	logChan chan<- string,
 	d *StreamPostTestData,
 	c *StreamPostTestLogsCounts,
@@ -156,21 +173,13 @@ func StreamPostTestLogs(
 	logChan <- "————————————————————————————————————————————————————————————————————————————————————————————————————Punch"
 }
 
-// Helper Functions
-// Helper Functions
-// --------------------------
-
-// --------------------------
-// Core Functions
-// Core Functions
-
 func executeWorker(
 	logChan chan<- string,
 	wg *sync.WaitGroup,
 	globalReqCount *atomic.Uint32,
 	workerID uint32,
 	childID uint32,
-	req WorkerReqInfo,
+	req ReqInfo,
 	targetRequests uint32,
 	baseDuration uint16,
 	workerReqDelay time.Duration,
@@ -223,7 +232,7 @@ func executeWorker(
 					Curr:             counts.Curr,
 				}
 
-				CreateWorkerLog(logChan, &l, &c, elapsedTime)
+				createWorkerLog(logChan, &l, &c, elapsedTime)
 
 			case resp.StatusCode == int(req.WantStatusCode):
 				counts.Suc++
@@ -241,7 +250,7 @@ func executeWorker(
 					Curr:             counts.Curr,
 				}
 
-				CreateWorkerLog(logChan, &l, &c, elapsedTime)
+				createWorkerLog(logChan, &l, &c, elapsedTime)
 				_ = resp.Body.Close()
 
 			default:
@@ -260,7 +269,7 @@ func executeWorker(
 					Curr:             counts.Curr,
 				}
 
-				CreateWorkerLog(logChan, &l, &c, elapsedTime)
+				createWorkerLog(logChan, &l, &c, elapsedTime)
 				_ = resp.Body.Close()
 			}
 
@@ -272,13 +281,14 @@ func executeWorker(
 	}
 }
 
+// RunTestWorkers ...
 func RunTestWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
-	config *PunchConfig,
+	config *config.PunchConfig,
 	testID *string,
 ) {
-	StreamInitTestLogs(logChan, testID)
+	streamInitTestLogs(logChan, testID)
 
 	var workerCount atomic.Uint32
 	var globalReqCount atomic.Uint32
@@ -328,7 +338,7 @@ func RunTestWorkers(
 			workerCount.Add(1)
 			wg.Add(1)
 
-			req := WorkerReqInfo{
+			req := ReqInfo{
 				Method:             child.Method,
 				URL:                URL,
 				ChildName:          child.Name,
@@ -361,40 +371,9 @@ func RunTestWorkers(
 		Global:  globalReqCount.Load(),
 	}
 
-	StreamPostTestLogs(
+	streamPostTestLogs(
 		logChan,
 		&postTestData,
 		&counts,
 	)
 }
-
-func main() {
-	pConfig, err := ParsePunchConfig("./")
-	if err != nil {
-		panic(err)
-	}
-
-	testID := &ClientData.TestID
-
-	var wg sync.WaitGroup
-	var logWg sync.WaitGroup
-
-	logWg.Add(1)
-
-	// Buffer channel to prevent blocking worker goroutines
-	logChanLen := uint32(50)
-	for _, v := range pConfig.Children {
-		logChanLen += v.TotalRequests
-	}
-	logChan := make(chan string, logChanLen)
-
-	go StreamWorkerLogs(logChan, &logWg)
-	RunTestWorkers(&wg, logChan, pConfig, testID)
-
-	close(logChan)
-	logWg.Wait()
-}
-
-// Core Functions
-// Core Functions
-// --------------------------
