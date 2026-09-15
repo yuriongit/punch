@@ -39,11 +39,11 @@ func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
 
 // ParsePunchConfig reads, parses, and returns the Punch
 // configuration file.
-func ParsePunchConfig(directory string) (PunchConfig, error) {
+func ParsePunchConfig(directory string) (*PunchConfig, error) {
 	// Attempt to change directory
 	err := os.Chdir(directory)
 	if err != nil {
-		return PunchConfig{}, fmt.Errorf(
+		return &PunchConfig{}, fmt.Errorf(
 			"failed to change directory to /%s: %w",
 			directory,
 			err,
@@ -52,7 +52,7 @@ func ParsePunchConfig(directory string) (PunchConfig, error) {
 	// Attempt to read Punch configuration file
 	file, err := os.ReadFile(PunchConfigFileName)
 	if err != nil {
-		return PunchConfig{}, fmt.Errorf(
+		return &PunchConfig{}, fmt.Errorf(
 			"no configuration file provided: %w",
 			err,
 		)
@@ -61,12 +61,12 @@ func ParsePunchConfig(directory string) (PunchConfig, error) {
 	var config PunchConfig
 	// Attempt to parse Punch Configuration file
 	if err := json.Unmarshal(file, &config); err != nil {
-		return PunchConfig{}, fmt.Errorf(
+		return &PunchConfig{}, fmt.Errorf(
 			"failed to unmarshal %s: %w",
 			PunchConfigFileName,
 			err,
 		)
 	}
 
-	return config, nil
+	return &config, nil
 }
