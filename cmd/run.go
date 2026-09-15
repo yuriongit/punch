@@ -24,7 +24,7 @@ var runCmd = &cobra.Command{
 
 To use the run command, specify a directory that contains a configuration file.
 If no directory is specified, Punch will return an error.`,
-  Args: func(cmd *cobra.Command, args []string) error {
+	Args: func(_ *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("directory not provided: specify a directory")
 		}
