@@ -9,7 +9,7 @@ package cli
 var wantStatusCode uint16 = 404
 var pWantStatusCode = &wantStatusCode
 
-// PunchConfigFileName holds the constant value of Punch's 
+// PunchConfigFileName holds the constant value of Punch's
 // configuration file name.
 var PunchConfigFileName = "punch.json"
 
