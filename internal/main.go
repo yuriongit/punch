@@ -1,4 +1,4 @@
-// Package main is the entry point of Punch's CLI tool.
+// Package cli is the entry point of Punch's CLI tool.
 package cli
 
 import (
