@@ -1,0 +1,55 @@
+{
+  // A single Punch file can contain several focused load tests.
+  "global_name": "bowtie",
+  "global_timeout_secs": 2.5,
+
+  "desc": "Two simple examples showing how one Punch file can test different API behaviors without creating separate configuration files or replacing one configuration file for mulitiple tests.",
+
+  "tests": [
+    {
+      // Tests how the API handles an attempt to create an existing resource.
+      "name": "create-existing-resource",
+      "desc": "Sends a POST request and expects a conflict response.",
+
+      "base_url": "http://bowtie.dev/api/v2",
+
+      "children": [
+        {
+          "path": "/resources",
+          "method": "POST",
+
+          "body": {
+            "name": "existing-resource"
+          },
+
+          "requests_per_sec": 200,
+          "duration_secs": 30,
+
+          // The expected status can be set for each request.
+          "expected_status_code": 409
+        }
+      ]
+    },
+
+    {
+      // Tests a fixed endpoint independently from the resource test above.
+      "name": "static-health-check",
+      "desc": "Checks a health endpoint with a one-second timeout.",
+
+      "base_url": "https://bowtie.dev/api/v2",
+
+      "children": [
+        {
+          "path": "/health",
+          "method": "GET",
+          "override_timeout_secs": 1,
+          "requests_per_sec": 100,
+          "duration_secs": 30,
+
+          // expected_status_code defaults to 200 when omitted.
+          "expected_status_code": 204
+        }
+      ]
+    }
+  ]
+}

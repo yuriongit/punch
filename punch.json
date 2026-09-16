@@ -1,16 +1,16 @@
 {
   "protocol": "http",
-  "target": "localhost:3000/api/lilify/v1/urls",
-  "grace_period_percent": 10,
+  "target": "pokeapi.co/api/v2/",
+  "grace_period_percent": 0,
   "children": [
     {
-      "name": "?alias=bBKq8z",
+      "name": "/pokemon/pikachu",
       "method": "GET",
-      "total_requests": 10,
-      "base_duration_secs": 2
+      "total_requests": 5,
+      "base_duration_secs": 5
     },
     {
-      "name": "?alias=123456",
+      "name": "/pokemon/fake-pikachu",
       "method": "GET",
       "total_requests": 10,
       "base_duration_secs": 5,
