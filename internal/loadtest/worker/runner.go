@@ -141,9 +141,9 @@ func streamInitTestLogs(
 	logChan chan<- string,
 	testID *string,
 ) {
-	logChan <- "Punch————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- "Punch————————————————————————————————————————————————————————————————————————"
 	logChan <- fmt.Sprintf("[INIT] Starting TEST-%s", *testID)
-	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- "————————————————————————————————————————————————————————————————————————Punch"
 }
 
 // StreamPostTestLogsCounts ...
@@ -165,12 +165,12 @@ func streamPostTestLogs(
 	d *StreamPostTestData,
 	c *StreamPostTestLogsCounts,
 ) {
-	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- "Punch————————————————————————————————————————————————————————————————————————"
 	logChan <- fmt.Sprintf("[SUCCESS] Completed TEST-%s successfully :)", *d.TestID)
 	logChan <- fmt.Sprintf("[LOG-MET] Test duration: %s w/ a grace period of %d%s", formatDuration(d.TestDur), d.GracePeriodPercent, "%")
 	logChan <- fmt.Sprintf("[LOG-MET] Total workers: %d", c.Workers)
 	logChan <- fmt.Sprintf("[LOG-MET] Fulfilled requests: %d", c.Global)
-	logChan <- "————————————————————————————————————————————————————————————————————————————————————————————————————Punch"
+	logChan <- "————————————————————————————————————————————————————————————————————————Punch"
 }
 
 func executeWorker(
