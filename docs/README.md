@@ -28,11 +28,11 @@ See:
 
 ## Infrastructure
 
-| Layer             | Tool                       |
-| ----------------- | -------------------------- |
-| Main              | Go, Cobra                  |
-| Tooling           | golangci-lint, Go          |
-| CI                | GitHub Actions             |
+| Layer   | Tool              |
+| ------- | ----------------- |
+| Main    | Go, Cobra         |
+| Tooling | golangci-lint, Go |
+| CI      | GitHub Actions    |
 
 ## Requirements
 
