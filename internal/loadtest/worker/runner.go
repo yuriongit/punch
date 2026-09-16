@@ -107,7 +107,7 @@ func createWorkerLog(
 		time.Now().Format(timeFormat),
 		l.Lvl.Load(),
 		l.ChildID,
-		l.WorkerID
+		l.WorkerID,
 		l.GotStatusCode,
 		l.WantStatusCode,
 		l.Lvl.Load(),
