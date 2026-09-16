@@ -1,0 +1,40 @@
+{
+  "global_name": "bowtie",
+  "global_timeout_secs": 2.5,
+  "desc": "Two simple examples showing how one Punch file can test different API behaviors without creating separate configuration files or replacing one configuration file for mulitiple tests.",
+
+  "tests": [
+    {
+      "name": "create-existing-resource",
+      "desc": "Sends a POST request and expects a conflict response.",
+      "base_url": "http://bowtie.dev/api/v2",
+      "children": [
+        {
+          "path": "/resources",
+          "method": "POST",
+          "body": {
+            "name": "existing-resource"
+          },
+          "requests_per_sec": 200,
+          "duration_secs": 30,
+          "expected_status_code": 409
+        }
+      ]
+    },
+    {
+      "name": "static-health-check",
+      "desc": "Checks a health endpoint with a one-second timeout.",
+      "base_url": "https://bowtie.dev/api/v2",
+      "children": [
+        {
+          "path": "/health",
+          "method": "GET",
+          "override_timeout_secs": 1,
+          "requests_per_sec": 100,
+          "duration_secs": 30,
+          "expected_status_code": 204
+        }
+      ]
+    }
+  ]
+}
