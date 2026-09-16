@@ -1,5 +1,5 @@
 {
-  "protocol": "http",
+  "protocol": "https",
   "target": "pokeapi.co/api/v2/",
   "grace_period_percent": 0,
   "children": [

@@ -96,33 +96,26 @@ func createWorkerLog(
 	timeFormat := "15:04:05.000000"
 	formattedDur := formatDuration(requestDuration)
 
-	switch l.Lvl.Load() {
-	case "LOG-SUC", "LOG-ERR":
-		logChan <- fmt.Sprintf(
-			"%s [%s]-[Worker-%d]-[Child-#%d] | Total req #%d, my req #%d - Got %d, want %d | Req time: %s",
-			time.Now().Format(timeFormat),
-			l.Lvl.Load(),
-			l.WorkerID,
-			l.ChildID,
-			c.GlobalReqCounter,
-			c.Curr,
-			l.GotStatusCode,
-			l.WantStatusCode,
-			formattedDur,
-		)
-	case "LOG-FAT":
-		logChan <- fmt.Sprintf(
-			"%s [%s]-[Worker-%d]-[Child-#%d] | Total req #%d, my req #%d - Error: %s | Req time: %s",
-			time.Now().Format(timeFormat),
-			l.Lvl.Load(),
-			l.WorkerID,
-			l.ChildID,
-			c.GlobalReqCounter,
-			c.Curr,
-			l.Error,
-			formattedDur,
-		)
+	if l.Error == "" { // TODO: Change to l.Response
+		l.Error = "Punch – N/A"
+	} else {
+		l.Error = fmt.Sprintf("'%s'", l.Error)
 	}
+
+	logChan <- fmt.Sprintf(
+		"%s [%s]-[Child-#%d]-[Worker-%d] – Got %v, want %v\n  ├── Status: %s\n  ├── Global Request: #%d\n  ├── My request: #%d\n  ├── Response Time: %s\n  ├── Response Body: %s",
+		time.Now().Format(timeFormat),
+		l.Lvl.Load(),
+		l.ChildID,
+		l.WorkerID,
+		l.GotStatusCode,
+		l.WantStatusCode,
+		l.Lvl.Load(),
+		c.GlobalReqCounter,
+		c.Curr,
+		formattedDur,
+		l.Error, // Change to l.ResponseBody
+	)
 }
 
 // StreamWorkerLogs streams logs to stdout concurrently.
@@ -141,9 +134,9 @@ func streamInitTestLogs(
 	logChan chan<- string,
 	testID *string,
 ) {
-	logChan <- "Punch————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- "Punch————————————————————————————————————————————————————————————————————————"
 	logChan <- fmt.Sprintf("[INIT] Starting TEST-%s", *testID)
-	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- "————————————————————————————————————————————————————————————————————————Punch"
 }
 
 // StreamPostTestLogsCounts ...
@@ -165,12 +158,12 @@ func streamPostTestLogs(
 	d *StreamPostTestData,
 	c *StreamPostTestLogsCounts,
 ) {
-	logChan <- "—————————————————————————————————————————————————————————————————————————————————————————————————————————"
+	logChan <- "Punch————————————————————————————————————————————————————————————————————————"
 	logChan <- fmt.Sprintf("[SUCCESS] Completed TEST-%s successfully :)", *d.TestID)
 	logChan <- fmt.Sprintf("[LOG-MET] Test duration: %s w/ a grace period of %d%s", formatDuration(d.TestDur), d.GracePeriodPercent, "%")
 	logChan <- fmt.Sprintf("[LOG-MET] Total workers: %d", c.Workers)
 	logChan <- fmt.Sprintf("[LOG-MET] Fulfilled requests: %d", c.Global)
-	logChan <- "————————————————————————————————————————————————————————————————————————————————————————————————————Punch"
+	logChan <- "————————————————————————————————————————————————————————————————————————Punch"
 }
 
 func executeWorker(
@@ -221,11 +214,13 @@ func executeWorker(
 				counts.FatErr++
 
 				l := Log{
-					Lvl:       LogFat,
-					WorkerID:  workerID,
-					ChildID:   childID,
-					ReqMethod: req.Method,
-					Error:     err.Error(),
+					Lvl:            LogFat,
+					WorkerID:       workerID,
+					ChildID:        childID,
+					ReqMethod:      req.Method,
+					WantStatusCode: req.WantStatusCode,
+					GotStatusCode:  0,
+					Error:          err.Error(),
 				}
 				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),
