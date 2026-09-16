@@ -30,12 +30,11 @@ Example:
 "Adds the `run` command. `run` allows Punch to start a 
 load test with directory specification..."-->
 
-...
-
 ## Changes
 
-<!--- Describe a singular change in present 
-tense workflows into a separate and temporary directory.
-A simple change would look like the following:-->
+<!--- Describe a list of changes, each a singular change in present 
+tense. A simple change could include the following:
 
-- Add change...
+Add sub-logs to the run command's output...-->
+
+- Replace me.
