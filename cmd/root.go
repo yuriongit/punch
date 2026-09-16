@@ -19,7 +19,14 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "punch",
 	Short: "punch is a customizable, simple and lightweight HTTP load testing CLI tool.",
-	Long:  `TODO: Implement later`,
+	Long: `Punch is a customizable, simple and lightweight HTTP load testing CLI tool.
+
+You define a load test in a punch.json config file, specifying a
+target and the requests to send. Punch then runs the test and
+reports how the target performed.
+
+To get started, create a config file; see the 'Usage' section or
+https://github.com/yuriongit/punch for more info.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
