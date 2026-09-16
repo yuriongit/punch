@@ -101,6 +101,21 @@ func createWorkerLog(
 	} else {
 		l.Error = fmt.Sprintf("'%s'", l.Error)
 	}
+
+	logChan <- fmt.Sprintf(
+		"%s [%s]-[Child-#%d]-[Worker-%d] – Got %v, want %v\n  ├── Status: %s\n  ├── Global Request: #%d\n  ├── My request: #%d\n  ├── Response Time: %s\n  ├── Response Body: %s",
+		time.Now().Format(timeFormat),
+		l.Lvl.Load(),
+		l.ChildID,
+		l.WorkerID
+		l.GotStatusCode,
+		l.WantStatusCode,
+		l.Lvl.Load(),
+		c.GlobalReqCounter,
+		c.Curr,
+		formattedDur,
+		l.Error, // Change to l.ResponseBody
+	)
 }
 
 // StreamWorkerLogs streams logs to stdout concurrently.
@@ -199,11 +214,13 @@ func executeWorker(
 				counts.FatErr++
 
 				l := Log{
-					Lvl:       LogFat,
-					WorkerID:  workerID,
-					ChildID:   childID,
-					ReqMethod: req.Method,
-					Error:     err.Error(),
+					Lvl:            LogFat,
+					WorkerID:       workerID,
+					ChildID:        childID,
+					ReqMethod:      req.Method,
+					WantStatusCode: req.WantStatusCode,
+					GotStatusCode:  0,
+					Error:          err.Error(),
 				}
 				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalReqCount.Load(),
