@@ -5,27 +5,33 @@
   // The base URL that receives the generated requests.
   "target": "localhost:3000/api/lilify/v1/urls",
 
-  // Allows the test duration to vary by up to 10 percent.
-  "grace_period_percent": 10,
+  // Allows the test duration to vary by up to 10 percent for timeouts, etc.
+  "grace_period_percent": 0,
 
   // A single Punch configuration can contain multiple request definitions.
   "children": [
     {
-      // The query string is appended to the target URL.
-      // This test requests the URL associated with the alias bBKq8z.
-      "name": "?alias=bBKq8z",
+      // The name of the child (the path) is appended to the target URL.
+      "name": "/pokemon/pikachu",
 
       // Sends a GET request to the configured target.
       "method": "GET",
 
       // Sends 10 total requests during this test.
-      "total_requests": 10,
+      "total_requests": 5,
 
       // The requests are distributed across a two-second test duration.
-      "base_duration_secs": 2,
-
-      // The test passes when the endpoint returns HTTP 404.
-      "want_status_code": 404
+      "base_duration_secs": 5,
+    },
+    {
+      // Demonstration of errors with an inexistant path.
+      "name": "/pokemon/fake-pikachu",
+      "method": "GET",
+      "total_requests": 15,
+      "base_duration_secs": 5,
+      
+      // If a request returns the wanted status code, that request is successfull.
+      "want_status_code": 404 // defaults to 200
     }
   ]
 }
