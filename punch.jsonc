@@ -1,0 +1,31 @@
+{
+  // The protocol used for all requests in this load test.
+  "protocol": "http",
+
+  // The base URL that receives the generated requests.
+  "target": "localhost:3000/api/lilify/v1/urls",
+
+  // Allows the test duration to vary by up to 10 percent.
+  "grace_period_percent": 10,
+
+  // A single Punch configuration can contain multiple request definitions.
+  "children": [
+    {
+      // The query string is appended to the target URL.
+      // This test requests the URL associated with the alias bBKq8z.
+      "name": "?alias=bBKq8z",
+
+      // Sends a GET request to the configured target.
+      "method": "GET",
+
+      // Sends 10 total requests during this test.
+      "total_requests": 10,
+
+      // The requests are distributed across a two-second test duration.
+      "base_duration_secs": 2,
+
+      // The test passes when the endpoint returns HTTP 404.
+      "want_status_code": 404
+    }
+  ]
+}
