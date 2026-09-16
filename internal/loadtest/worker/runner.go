@@ -96,32 +96,10 @@ func createWorkerLog(
 	timeFormat := "15:04:05.000000"
 	formattedDur := formatDuration(requestDuration)
 
-	switch l.Lvl.Load() {
-	case "LOG-SUC", "LOG-ERR":
-		logChan <- fmt.Sprintf(
-			"%s [%s]-[Worker-%d]-[Child-#%d] | Total req #%d, my req #%d - Got %d, want %d | Req time: %s",
-			time.Now().Format(timeFormat),
-			l.Lvl.Load(),
-			l.WorkerID,
-			l.ChildID,
-			c.GlobalReqCounter,
-			c.Curr,
-			l.GotStatusCode,
-			l.WantStatusCode,
-			formattedDur,
-		)
-	case "LOG-FAT":
-		logChan <- fmt.Sprintf(
-			"%s [%s]-[Worker-%d]-[Child-#%d] | Total req #%d, my req #%d - Error: %s | Req time: %s",
-			time.Now().Format(timeFormat),
-			l.Lvl.Load(),
-			l.WorkerID,
-			l.ChildID,
-			c.GlobalReqCounter,
-			c.Curr,
-			l.Error,
-			formattedDur,
-		)
+	if l.Error == "" { // TODO: Change to l.Response
+		l.Error = "Punch – N/A"
+	} else {
+		l.Error = fmt.Sprintf("'%s'", l.Error)
 	}
 }
 
