@@ -9,6 +9,7 @@ package worker
 
 import (
 	"sync/atomic"
+	"time"
 )
 
 /*
@@ -96,4 +97,17 @@ type Log struct {
 	GotStatusCode  uint16
 	WantStatusCode uint16
 	Error          string
+}
+
+// StreamPostTestLogsCounts ...
+type StreamPostTestLogsCounts struct {
+	Workers uint32
+	Global  uint32
+}
+
+// StreamPostTestData ...
+type StreamPostTestData struct {
+	TestID             *string
+	TestDur            time.Duration
+	GracePeriodPercent uint8
 }
