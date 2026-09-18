@@ -35,7 +35,7 @@ func RunTest(directory string) error {
 	logChan := make(chan string, logChanLen)
 
 	go worker.StreamWorkerLogs(logChan, &logWg)
-	worker.RunTestWorkers(&wg, logChan, clientConfig, &testID)
+	worker.RunWorkers(&wg, logChan, clientConfig, &testID)
 
 	close(logChan)
 	logWg.Wait()
