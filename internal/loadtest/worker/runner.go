@@ -84,10 +84,10 @@ func formatLatency(
 	}
 }
 
-/* 
+/*
 createWorkerLog creates a formatted worker log
 with custom colored brackets and light grey sub-logs.
-*/ 
+*/
 func createWorkerLog(
 	logChan chan<- string,
 	l *Log,

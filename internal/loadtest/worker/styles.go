@@ -165,11 +165,11 @@ func reverseLineBreak() string {
 func lineBreak(lineType string) string {
 	switch lineType {
 	case "short":
-		return lg.NewStyle().Faint(true).Render("—————————")
+		return lineBreakFaintStyle.Render("—————————")
 	case "exit":
 		return lineBreakStyle.Render("—————————————————————————————————————————————Punch")
 	default:
-		return lg.NewStyle().Faint(true).Render("——————————————————————————————————————————————————")
+		return lineBreakFaintStyle.Render("——————————————————————————————————————————————————")
 	}
 }
 
