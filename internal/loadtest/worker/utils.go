@@ -51,11 +51,16 @@ func streamPostTestLogs(
 	currentTime := time.Now().Format(time.TimeOnly)
 	currentDate := time.Now().Format(dateFormat)
 
+	testStatus := "Error"
+	if c.RegErr.Load() == 0 && c.FatErr.Load() == 0 {
+	  testStatus = "Success"
+	}
+	
 	// Create post test metrics.
 	var (
 		// Implement "Status" field's value. Will output "Error" or "Success"
 		// based off error counts
-		completedTestLog     = createPostMetricLog("Status", "UNIMPLEMENTED")
+		completedTestLog     = createPostMetricLog("Status", testStatus)
 		dateLog              = createPostMetricLog("Date", currentDate)
 		timeLog              = createPostMetricLog("Time", currentTime)
 		testIDLog            = createPostMetricLog("Test ID", fmt.Sprintf("TEST-%s", *d.TestID))
