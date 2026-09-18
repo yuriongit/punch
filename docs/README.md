@@ -15,6 +15,10 @@ and reports how it performed.
    - Workers and global request amounts
    - Formatted measured response times
 4. Supports GET requests
+5. Improve test output formatting and structure
+   - Structured sub-logs
+   - Structured post-test results
+   - Colored and formatted logs
 
 ## Configuration
 
