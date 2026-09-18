@@ -44,25 +44,30 @@ func streamPreTestLogs(
 func streamPostTestLogs(
 	logChan chan<- string,
 	d *StreamPostTestData,
-	c *StreamPostTestLogsCounts,
+	c *GlobalCounts,
 ) {
 	/* Capture current time before date to acquire as accurate of a
 	result as possible. */
 	currentTime := time.Now().Format(time.TimeOnly)
 	currentDate := time.Now().Format(dateFormat)
 
+	testStatus := "Error"
+	if c.RegErr.Load() == 0 && c.FatErr.Load() == 0 {
+		testStatus = "Success"
+	}
+
 	// Create post test metrics.
 	var (
 		// Implement "Status" field's value. Will output "Error" or "Success"
 		// based off error counts
-		completedTestLog     = createPostMetricLog("Status", "UNIMPLEMENTED")
+		completedTestLog     = createPostMetricLog("Status", testStatus)
 		dateLog              = createPostMetricLog("Date", currentDate)
 		timeLog              = createPostMetricLog("Time", currentTime)
 		testIDLog            = createPostMetricLog("Test ID", fmt.Sprintf("TEST-%s", *d.TestID))
 		testDurationLog      = createPostMetricLog("Duration", formatLatency(d.TestDur))
 		gracePeriodLog       = createPostMetricLog("Grace Period", fmt.Sprintf("%d%s", d.GracePeriodPercent, "%"))
-		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Global))
-		totalWorkersLog      = createPostMetricLog("Workers", fmt.Sprintf("%d workers", c.Workers))
+		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Curr.Load()))
+		totalWorkersLog      = createPostMetricLog("Workers", fmt.Sprintf("%d workers", c.Workers.Load()))
 	)
 
 	// Stream post test metrics.
