@@ -100,12 +100,6 @@ type Log struct {
 	Error          string
 }
 
-// StreamPostTestLogsCounts ...
-type StreamPostTestLogsCounts struct {
-	Workers uint32
-	Global  uint32
-}
-
 // StreamPostTestData ...
 type StreamPostTestData struct {
 	TestID             *string
