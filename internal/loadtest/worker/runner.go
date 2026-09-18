@@ -163,7 +163,7 @@ func StreamWorkerLogs(
 func executeWorker(
 	logChan chan<- string,
 	wg *sync.WaitGroup,
-	globalReqCount *atomic.Uint32,
+	globalCounts *GlobalCounts,
 	workerID uint32,
 	childID uint32,
 	req ReqInfo,
@@ -201,11 +201,12 @@ func executeWorker(
 			elapsedTime := time.Since(requestStartTime)
 
 			counts.Curr++
-			globalReqCount.Add(1)
+			globalCounts.Curr.Add(1)
 
 			switch {
 			case err != nil:
 				counts.FatErr++
+				globalCounts.FatErr.Add(1)
 
 				l := Log{
 					Lvl:            LogFat,
@@ -217,14 +218,15 @@ func executeWorker(
 					Error:          err.Error(),
 				}
 				c := CreateWorkerResLogCounts{
-					GlobalReqCounter: globalReqCount.Load(),
-					Curr:             counts.Curr,
+					GlobalReqCounter: globalCounts.Curr.Load(),
+					Curr:             counts.Curr, // Rename to localCounts for improved clarity.
 				}
 
 				createWorkerLog(logChan, &l, &c, elapsedTime)
 
 			case resp.StatusCode == int(req.WantStatusCode):
 				counts.Suc++
+				globalCounts.Suc.Add(1)
 
 				l := Log{
 					Lvl:            LogSuc,
@@ -235,7 +237,7 @@ func executeWorker(
 					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
 				}
 				c := CreateWorkerResLogCounts{
-					GlobalReqCounter: globalReqCount.Load(),
+					GlobalReqCounter: globalCounts.Curr.Load(),
 					Curr:             counts.Curr,
 				}
 
@@ -244,6 +246,7 @@ func executeWorker(
 
 			default:
 				counts.RegErr++
+				globalCounts.RegErr.Add(1)
 
 				l := Log{
 					Lvl:            LogErr,
@@ -254,7 +257,7 @@ func executeWorker(
 					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
 				}
 				c := CreateWorkerResLogCounts{
-					GlobalReqCounter: globalReqCount.Load(),
+					GlobalReqCounter: globalCounts.Curr.Load(),
 					Curr:             counts.Curr,
 				}
 
@@ -279,9 +282,12 @@ func RunWorkers(
 ) {
 	streamPreTestLogs(logChan, testID)
 
-	var workerCount atomic.Uint32
-	var globalReqCount atomic.Uint32
-	var globalWorkerCount atomic.Uint32
+	globalCounts := GlobalCounts{
+	  Curr: atomic.Uint32{},
+		Workers: atomic.Uint32{},
+		FatErr: atomic.Uint32{},
+		RegErr: atomic.Uint32{},
+	}
 
 	testStartTime := time.Now()
 
@@ -324,7 +330,7 @@ func RunWorkers(
 				workerReqDelay = time.Duration((float64(child.BaseDurationSecs) / float64(reqsForThisWorker)) * float64(time.Second))
 			}
 
-			workerCount.Add(1)
+			globalCounts.Workers.Add(1)
 			wg.Add(1)
 
 			req := ReqInfo{
@@ -335,12 +341,12 @@ func RunWorkers(
 				GracePeriodPercent: config.GracePeriodPercent,
 			}
 
-			workerID := globalWorkerCount.Add(1)
+			workerID := globalCounts.Workers.Add(1)
 
 			go executeWorker(
 				logChan,
 				wg,
-				&globalReqCount,
+				&globalCounts,
 				workerID,
 				uint32(childID+1),
 				req,
@@ -355,14 +361,10 @@ func RunWorkers(
 	testDuration := time.Since(testStartTime)
 
 	postTestData := StreamPostTestData{testID, time.Duration(testDuration), config.GracePeriodPercent}
-	counts := StreamPostTestLogsCounts{
-		Workers: workerCount.Load(),
-		Global:  globalReqCount.Load(),
-	}
 
 	streamPostTestLogs(
 		logChan,
 		&postTestData,
-		&counts,
+		&globalCounts,
 	)
 }

@@ -44,7 +44,7 @@ func streamPreTestLogs(
 func streamPostTestLogs(
 	logChan chan<- string,
 	d *StreamPostTestData,
-	c *StreamPostTestLogsCounts,
+	c *GlobalCounts,
 ) {
 	/* Capture current time before date to acquire as accurate of a
 	result as possible. */
@@ -61,8 +61,8 @@ func streamPostTestLogs(
 		testIDLog            = createPostMetricLog("Test ID", fmt.Sprintf("TEST-%s", *d.TestID))
 		testDurationLog      = createPostMetricLog("Duration", formatLatency(d.TestDur))
 		gracePeriodLog       = createPostMetricLog("Grace Period", fmt.Sprintf("%d%s", d.GracePeriodPercent, "%"))
-		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Global))
-		totalWorkersLog      = createPostMetricLog("Workers", fmt.Sprintf("%d workers", c.Workers))
+		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Curr.Load()))
+		totalWorkersLog      = createPostMetricLog("Workers", fmt.Sprintf("%d workers", c.Workers.Load()))
 	)
 
 	// Stream post test metrics.
