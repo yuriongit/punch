@@ -35,10 +35,10 @@ a load-test is set to fulfill. These counts are incremented
 by workers themselves.
 */
 type GlobalCounts struct {
-	Curr   atomic.Uint32
-	FatErr atomic.Uint32
-	RegErr atomic.Uint32
-	Suc    atomic.Uint32
+	Curr    atomic.Uint32
+	FatErr  atomic.Uint32
+	RegErr  atomic.Uint32
+	Suc     atomic.Uint32
 	Workers atomic.Uint32
 }
 

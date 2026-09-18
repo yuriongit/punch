@@ -283,10 +283,10 @@ func RunWorkers(
 	streamPreTestLogs(logChan, testID)
 
 	globalCounts := GlobalCounts{
-	  Curr: atomic.Uint32{},
+		Curr:    atomic.Uint32{},
 		Workers: atomic.Uint32{},
-		FatErr: atomic.Uint32{},
-		RegErr: atomic.Uint32{},
+		FatErr:  atomic.Uint32{},
+		RegErr:  atomic.Uint32{},
 	}
 
 	testStartTime := time.Now()

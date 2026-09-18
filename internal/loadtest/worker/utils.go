@@ -53,9 +53,9 @@ func streamPostTestLogs(
 
 	testStatus := "Error"
 	if c.RegErr.Load() == 0 && c.FatErr.Load() == 0 {
-	  testStatus = "Success"
+		testStatus = "Success"
 	}
-	
+
 	// Create post test metrics.
 	var (
 		// Implement "Status" field's value. Will output "Error" or "Success"
