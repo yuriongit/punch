@@ -39,6 +39,7 @@ type GlobalCounts struct {
 	FatErr atomic.Uint32
 	RegErr atomic.Uint32
 	Suc    atomic.Uint32
+	Workers atomic.Uint32
 }
 
 /*
