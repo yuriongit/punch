@@ -360,11 +360,11 @@ func RunWorkers(
 	wg.Wait()
 	testDuration := time.Since(testStartTime)
 
-	postTestData := StreamPostTestData{testID, time.Duration(testDuration), config.GracePeriodPercent}
+	postTestMetrics := PostTestMetrics{testID, time.Duration(testDuration), config.GracePeriodPercent}
 
 	streamPostTestLogs(
 		logChan,
-		&postTestData,
+		&postTestMetrics,
 		&globalCounts,
 	)
 }

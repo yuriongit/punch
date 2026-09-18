@@ -100,8 +100,8 @@ type Log struct {
 	Error          string
 }
 
-// StreamPostTestData ...
-type StreamPostTestData struct {
+// PostTestMetrics ...
+type PostTestMetrics struct {
 	TestID             *string
 	TestDur            time.Duration
 	GracePeriodPercent uint8
