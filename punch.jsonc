@@ -31,7 +31,7 @@
       "base_duration_secs": 2,
       
       // If a request returns the wanted status code, that request is successfull.
-      "want_status_code": 404 // defaults to 200
+      "want_status_code": 200 // defaults to 200
     }
   ]
 }

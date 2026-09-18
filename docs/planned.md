@@ -5,6 +5,11 @@ decided but not yet implemented.
 
 ## Features
 
+- [ ] Incorporate dynamic post-test status: "Success" | "Error". Determine status
+      off of global request counts:
+  - [ ] Assign "Success" status if fatal or regular errors count is == 0.
+        Else, assign the "Error" status.
+- [ ] Extract pre-test and post-test logs out of RunWorkers
 - [ ] Increase detail of performance summaries:
   - [ ] Report total successful, fatal, and failed requests
   - [ ] Include latencies: P99, P95, and P50
@@ -14,14 +19,13 @@ decided but not yet implemented.
   - [ ] See [punch-planned.jsonc](../punch-planned.jsonc) for the planned layout
 - [ ] Implement remaining HTTP methods
 - [ ] Allow multiple separate tests within configuration file (single object->array)
-- [ ] Integrate CD with GitHub Actions
 - [ ] Global Punch configuration (`~/.punch`):
 
   ```bash
   ~/.punch
   ├── config/
   ├── tests/
-      ├── bow/
+      ├── bowtie/
       │   ├── logs/
       │   │   ├── metadata.json    # includes: dates, config, etc.
       │   │   ├── bow-test-id-logs-1.json
@@ -40,7 +44,6 @@ decided but not yet implemented.
     - [ ] Logs
     - [ ] Results:
       - [ ] .json (save must be included in config file or via the CLI)
-- [ ] Improve test output formatting and structure
 - [ ] Improve error reports
 - [ ] Containerize builds with Docker (include build step for CI)
 
@@ -58,6 +61,20 @@ decided but not yet implemented.
 
   ```bash
   punch run --save [directory]
+  ```
+
+- [ ] Run a load test with detailed output in the terminal.
+  - [ ] Create default logs: A concise version of the verbose log set.
+
+  ```bash
+  punch run --verbose <directory>
+  ```
+
+- [ ] Run a load test that exits instantly if any errors are tracked
+      (includes fatal and regular errors):
+
+  ```bash
+  punch run [--instant-fail] <directory>
   ```
 
 - [ ] List all persisted logs with their test IDs, names, and dates:
