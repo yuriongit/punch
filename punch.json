@@ -6,14 +6,14 @@
     {
       "name": "/pokemon/pikachu",
       "method": "GET",
-      "total_requests": 5,
-      "base_duration_secs": 5
+      "total_requests": 2,
+      "base_duration_secs": 4
     },
     {
       "name": "/pokemon/fake-pikachu",
       "method": "GET",
-      "total_requests": 10,
-      "base_duration_secs": 5,
+      "total_requests": 2,
+      "base_duration_secs": 2,
       "want_status_code": 404
     }
   ]
