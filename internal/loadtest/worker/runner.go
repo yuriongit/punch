@@ -18,8 +18,7 @@ import (
 )
 
 /*
-	Global HTTP Client configured with timeouts and connection
-
+Global HTTP Client configured with timeouts and connection
 pooling to prevent goroutine leaks and stalled requests during
 high load tests.
 */
@@ -33,12 +32,11 @@ var httpClient = &http.Client{
 }
 
 /*
-	formatDuration dynamically formats a time.Duration into
-
+formatLatency dynamically formats a time.Duration into
 human-readable units (nanoseconds, microseconds, milliseconds,
 seconds, minutes, hours).
 */
-func formatDuration(
+func formatLatency(
 	d time.Duration,
 ) string {
 	switch {
@@ -86,15 +84,32 @@ func formatDuration(
 	}
 }
 
-// createWorkerLog ...
+/*
+createWorkerLog creates a formatted worker log
+with custom colored brackets and light grey sub-logs.
+*/
 func createWorkerLog(
 	logChan chan<- string,
 	l *Log,
 	c *CreateWorkerResLogCounts,
-	requestDuration time.Duration,
+	latency time.Duration,
 ) {
-	timeFormat := "15:04:05.000000"
-	formattedDur := formatDuration(requestDuration)
+	logLvl := l.Lvl.Load()
+	styledLogLvl := styleLogLvl(logLvl)
+	styledTimestamp := styleAndFormatTimestamp(styledLogLvl.Bold(false), time.Now())
+	formattedLatency := formatLatency(latency)
+
+	styleLogLvlAccent := styleLogLvlAccent(logLvl)
+
+	// 2. Colorize status level text
+	coloredLvl := styledLogLvl.Render(logLvl)
+
+	// 3. Highlight Got and Want status codes using the log level's style
+	gotAndWantStatusCodes := styledLogLvl.Render(fmt.Sprintf("%d/%d", l.GotStatusCode, l.WantStatusCode))
+
+	// 4. Accent-color the opening and closing brackets
+	openBracket := styleLogLvlAccent.Render("[ ")
+	closeBracket := styleLogLvlAccent.Render(" ]")
 
 	if l.Error == "" { // TODO: Change to l.Response
 		l.Error = "Punch – N/A"
@@ -102,20 +117,36 @@ func createWorkerLog(
 		l.Error = fmt.Sprintf("'%s'", l.Error)
 	}
 
-	logChan <- fmt.Sprintf(
-		"%s [%s]-[Child-#%d]-[Worker-%d] – Got %v, want %v\n  ├── Status: %s\n  ├── Global Request: #%d\n  ├── My request: #%d\n  ├── Response Time: %s\n  ├── Response Body: %s",
-		time.Now().Format(timeFormat),
-		l.Lvl.Load(),
+	header := fmt.Sprintf(
+		"%s %s%s %s Child #%d, Worker #%d%s\n",
+		styledTimestamp,
+		openBracket,
+		coloredLvl,
+		faintStyle.Render("|"),
 		l.ChildID,
 		l.WorkerID,
-		l.GotStatusCode,
-		l.WantStatusCode,
-		l.Lvl.Load(),
+		closeBracket,
+	)
+
+	// 5. Build raw tree structure
+	rawSubLogs := fmt.Sprintf(
+		"  %s %s\n"+
+			"  ├── Global Request: #%d\n"+
+			"  ├── My request: #%d\n"+
+			"  ├── Latency: %s\n"+
+			"  └── Response Body: %s",
+		styleLogLvl(logLvl).Bold(true).Blink(true).Render("├── Got/Want:"),
+		gotAndWantStatusCodes,
 		c.GlobalReqCounter,
 		c.Curr,
-		formattedDur,
+		formattedLatency,
 		l.Error, // Change to l.ResponseBody
 	)
+
+	// 6. Render the sub-logs in light grey (248)
+	coloredSubLogs := subLogStyle.Render(rawSubLogs)
+
+	logChan <- (header + coloredSubLogs)
 }
 
 // StreamWorkerLogs streams logs to stdout concurrently.
@@ -127,43 +158,6 @@ func StreamWorkerLogs(
 	for msg := range logChan {
 		fmt.Println(msg)
 	}
-}
-
-// streamInitTestLogs outputs initial benchmark headers.
-func streamInitTestLogs(
-	logChan chan<- string,
-	testID *string,
-) {
-	logChan <- "Punch————————————————————————————————————————————————————————————————————————"
-	logChan <- fmt.Sprintf("[INIT] Starting TEST-%s", *testID)
-	logChan <- "————————————————————————————————————————————————————————————————————————Punch"
-}
-
-// StreamPostTestLogsCounts ...
-type StreamPostTestLogsCounts struct {
-	Workers uint32
-	Global  uint32
-}
-
-// StreamPostTestData ...
-type StreamPostTestData struct {
-	TestID             *string
-	TestDur            time.Duration
-	GracePeriodPercent uint8
-}
-
-// streamPostTestLogs outputs final benchmark metrics.
-func streamPostTestLogs(
-	logChan chan<- string,
-	d *StreamPostTestData,
-	c *StreamPostTestLogsCounts,
-) {
-	logChan <- "Punch————————————————————————————————————————————————————————————————————————"
-	logChan <- fmt.Sprintf("[SUCCESS] Completed TEST-%s successfully :)", *d.TestID)
-	logChan <- fmt.Sprintf("[LOG-MET] Test duration: %s w/ a grace period of %d%s", formatDuration(d.TestDur), d.GracePeriodPercent, "%")
-	logChan <- fmt.Sprintf("[LOG-MET] Total workers: %d", c.Workers)
-	logChan <- fmt.Sprintf("[LOG-MET] Fulfilled requests: %d", c.Global)
-	logChan <- "————————————————————————————————————————————————————————————————————————Punch"
 }
 
 func executeWorker(
@@ -276,14 +270,14 @@ func executeWorker(
 	}
 }
 
-// RunTestWorkers ...
-func RunTestWorkers(
+// RunWorkers ...
+func RunWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
 	config *config.PunchConfig,
 	testID *string,
 ) {
-	streamInitTestLogs(logChan, testID)
+	streamPreTestLogs(logChan, testID)
 
 	var workerCount atomic.Uint32
 	var globalReqCount atomic.Uint32
