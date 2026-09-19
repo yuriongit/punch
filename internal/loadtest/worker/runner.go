@@ -140,7 +140,7 @@ func createWorkerLog(
 		c.GlobalReqCounter,
 		c.Curr,
 		formattedLatency,
-		l.Error, // Change to l.ResponseBody
+		l.Response, // Change to l.ResponseBody
 	)
 
 	// 6. Render the sub-logs in light grey (248)
@@ -205,7 +205,7 @@ func executeWorker(
 
 			switch {
 			case err != nil:
-				counts.FatErr++
+				counts.FatalErr++
 				globalCounts.FatErr.Add(1)
 
 				l := Log{
@@ -215,7 +215,7 @@ func executeWorker(
 					ReqMethod:      req.Method,
 					WantStatusCode: req.WantStatusCode,
 					GotStatusCode:  0,
-					Error:          err.Error(),
+					Response:          err.Error(),
 				}
 				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalCounts.Curr.Load(),
@@ -225,8 +225,8 @@ func executeWorker(
 				createWorkerLog(logChan, &l, &c, elapsedTime)
 
 			case resp.StatusCode == int(req.WantStatusCode):
-				counts.Suc++
-				globalCounts.Suc.Add(1)
+				counts.Success++
+				globalCounts.Succ.Add(1)
 
 				l := Log{
 					Lvl:            LogSuc,
@@ -245,7 +245,7 @@ func executeWorker(
 				_ = resp.Body.Close()
 
 			default:
-				counts.RegErr++
+				counts.RegularErr++
 				globalCounts.RegErr.Add(1)
 
 				l := Log{

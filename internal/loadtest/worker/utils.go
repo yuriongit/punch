@@ -64,7 +64,7 @@ func streamPostTestLogs(
 		dateLog              = createPostMetricLog("Date", currentDate)
 		timeLog              = createPostMetricLog("Time", currentTime)
 		testIDLog            = createPostMetricLog("Test ID", fmt.Sprintf("TEST-%s", *m.TestID))
-		testDurationLog      = createPostMetricLog("Duration", formatLatency(m.TestDur))
+		testDurationLog      = createPostMetricLog("Duration", formatLatency(m.TestDuration))
 		gracePeriodLog       = createPostMetricLog("Grace Period", fmt.Sprintf("%d%s", m.GracePeriodPercent, "%"))
 		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Curr.Load()))
 		totalWorkersLog      = createPostMetricLog("Workers", fmt.Sprintf("%d workers", c.Workers.Load()))

@@ -92,9 +92,9 @@ Style-related helpers
 // styleLogLvl returns the styled log level.
 func styleLogLvl(lvl string) lg.Style {
 	switch lvl {
-	case "LOG-SUC":
+	case "LOG-SUCC":
 		return successStyle
-	case "LOG-ERR":
+	case "LOG-ERRO":
 		return regularErrStyle
 	default:
 		return fatalErrStyle
@@ -104,9 +104,9 @@ func styleLogLvl(lvl string) lg.Style {
 // styleLogLvlAccent returns strings with an accent style based on log level.
 func styleLogLvlAccent(lvl string) lg.Style {
 	switch lvl {
-	case "LOG-SUC":
+	case "LOG-SUCC":
 		return successAccentStyle
-	case "LOG-ERR":
+	case "LOG-ERRO":
 		return regErrAccentStyle
 	default:
 		return fatalErrAccentStyle

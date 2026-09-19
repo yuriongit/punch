@@ -38,7 +38,7 @@ type GlobalCounts struct {
 	Curr    atomic.Uint32
 	FatErr  atomic.Uint32
 	RegErr  atomic.Uint32
-	Suc     atomic.Uint32
+	Succ     atomic.Uint32
 	Workers atomic.Uint32
 }
 
@@ -50,9 +50,9 @@ incremented by workers themselves.
 */
 type ChildCounts struct {
 	Curr   uint32
-	FatErr uint32
-	RegErr uint32
-	Suc    uint32
+	FatalErr uint32
+	RegularErr uint32
+	Success    uint32
 }
 
 /*
@@ -70,7 +70,7 @@ type LogLvl int
 
 // Load returns the string output of the enum
 func (l LogLvl) Load() string {
-	return [...]string{"LOG-SUC", "LOG-FAT", "LOG-FIN", "LOG-ERR"}[l-1]
+	return [...]string{"LOG-SUCC", "LOG-FATA", "LOG-FINI", "LOG-ERRO"}[l-1]
 }
 
 // EnumIdx returns the index of the LogLvl enum.
@@ -97,12 +97,12 @@ type Log struct {
 	ReqMethod      string
 	GotStatusCode  uint16
 	WantStatusCode uint16
-	Error          string
+	Response          string
 }
 
 // PostTestMetrics ...
 type PostTestMetrics struct {
 	TestID             *string
-	TestDur            time.Duration
+	TestDuration            time.Duration
 	GracePeriodPercent uint8
 }
