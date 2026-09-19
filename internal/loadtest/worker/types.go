@@ -38,7 +38,7 @@ type GlobalCounts struct {
 	Curr    atomic.Uint32
 	FatErr  atomic.Uint32
 	RegErr  atomic.Uint32
-	Succ     atomic.Uint32
+	Succ    atomic.Uint32
 	Workers atomic.Uint32
 }
 
@@ -49,8 +49,8 @@ requests the worker is set out to fulfill. These counts are
 incremented by workers themselves.
 */
 type ChildCounts struct {
-	Curr   uint32
-	FatalErr uint32
+	Curr       uint32
+	FatalErr   uint32
 	RegularErr uint32
 	Success    uint32
 }
@@ -102,6 +102,6 @@ type Log struct {
 // PostTestMetrics ...
 type PostTestMetrics struct {
 	TestID             *string
-	TestDuration            time.Duration
+	TestDuration       time.Duration
 	GracePeriodPercent uint8
 }
