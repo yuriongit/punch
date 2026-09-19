@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/yuriongit/punch/internal/config"
+	"github.com/yuriongit/punch/internal/shared"
 )
 
 /*
@@ -92,12 +93,11 @@ func createWorkerLog(
 	logChan chan<- string,
 	l *Log,
 	c *CurrentRequestCounts,
-	latency time.Duration,
 ) {
 	logLvl := l.Lvl.Load()
 	styledLogLvl := styleLogLvl(logLvl)
 	styledTimestamp := styleAndFormatTimestamp(styledLogLvl.Bold(false), time.Now())
-	formattedLatency := formatLatency(latency)
+	formattedLatency := formatLatency(l.Latency)
 
 	styleLogLvlAccent := styleLogLvlAccent(logLvl)
 
@@ -147,8 +147,8 @@ func StreamWorkerLogs(
 	logWg *sync.WaitGroup,
 ) {
 	defer logWg.Done()
-	for msg := range logChan {
-		fmt.Println(msg)
+	for log := range logChan {
+		fmt.Println(log)
 	}
 }
 
@@ -189,7 +189,7 @@ func executeWorker(
 			// Measure pure HTTP round-trip latency
 			requestStartTime := time.Now()
 			resp, err := httpClient.Get(req.URL)
-			elapsedTime := time.Since(requestStartTime)
+			latency := time.Since(requestStartTime)
 
 			workerCounts.Current++
 			globalCounts.Current.Add(1)
@@ -203,17 +203,18 @@ func executeWorker(
 					Lvl:       LogFata,
 					IDs:       IDs,
 					ReqMethod: req.Method,
-					// LogStatuses: {
-					// 		Want: req.WantStatusCode,
-					// 		Got:  0,
-					// },
+					StatusCodes: StatusCodes{
+						Want: req.WantStatusCode,
+						Got:  0,
+					},
+					Latency: latency,
 				}
 				c := CurrentRequestCounts{
 					GlobalCurrent: globalCounts.Current.Load(),
 					WorkerCurrent: workerCounts.Current,
 				}
 
-				createWorkerLog(logChan, &l, &c, elapsedTime)
+				createWorkerLog(logChan, &l, &c)
 
 			case resp.StatusCode == int(req.WantStatusCode):
 				workerCounts.Success++
@@ -224,16 +225,17 @@ func executeWorker(
 					IDs:       IDs,
 					ReqMethod: req.Method,
 					StatusCodes: StatusCodes{
-						Want: StatusCode(req.WantStatusCode),
-						Got:  StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
+						Want: shared.StatusCode(req.WantStatusCode),
+						Got:  shared.StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
 					},
+					Latency: latency,
 				}
 				c := CurrentRequestCounts{
 					GlobalCurrent: globalCounts.Current.Load(),
 					WorkerCurrent: workerCounts.Current,
 				}
 
-				createWorkerLog(logChan, &l, &c, elapsedTime)
+				createWorkerLog(logChan, &l, &c)
 				_ = resp.Body.Close()
 
 			default:
@@ -245,16 +247,17 @@ func executeWorker(
 					IDs:       IDs,
 					ReqMethod: req.Method,
 					StatusCodes: StatusCodes{
-						Want: StatusCode(req.WantStatusCode),
-						Got:  StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
+						Want: shared.StatusCode(req.WantStatusCode),
+						Got:  shared.StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
 					},
+					Latency: latency,
 				}
 				c := CurrentRequestCounts{
 					GlobalCurrent: globalCounts.Current.Load(),
 					WorkerCurrent: workerCounts.Current,
 				}
 
-				createWorkerLog(logChan, &l, &c, elapsedTime)
+				createWorkerLog(logChan, &l, &c)
 				_ = resp.Body.Close()
 			}
 
@@ -270,7 +273,7 @@ func executeWorker(
 func RunWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
-	config *config.ConfigFile,
+	config *config.File,
 	testID *config.TestID,
 ) {
 	streamPreTestLogs(logChan, testID)
@@ -305,7 +308,7 @@ func RunWorkers(
 		remainderReqs := child.TotalRequests % numWorkers
 
 		if child.WantStatusCode == nil {
-			childExpectedStatus := uint16(200)
+			childExpectedStatus := shared.StatusCode(200)
 			child.WantStatusCode = &childExpectedStatus
 		}
 

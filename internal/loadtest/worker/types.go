@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/yuriongit/punch/internal/config"
+	"github.com/yuriongit/punch/internal/shared"
 )
 
 /*
@@ -26,7 +27,7 @@ type ReqInfo struct {
 	Method             string
 	URL                string
 	ChildName          string
-	WantStatusCode     uint16
+	WantStatusCode     shared.StatusCode
 	GracePeriodPercent uint8
 }
 
@@ -88,8 +89,6 @@ const (
 	LogErro
 )
 
-type StatusCode uint16
-
 type ID uint32
 
 type IDs struct {
@@ -98,8 +97,8 @@ type IDs struct {
 }
 
 type StatusCodes struct {
-	Got  StatusCode
-	Want StatusCode
+	Got  shared.StatusCode
+	Want shared.StatusCode
 }
 
 /*
@@ -111,6 +110,7 @@ type Log struct {
 	IDs         IDs
 	ReqMethod   string
 	StatusCodes StatusCodes
+	Latency     time.Duration
 }
 
 // PostTestMetrics ...

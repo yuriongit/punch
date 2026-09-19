@@ -15,7 +15,7 @@ import (
 
 // RunTest starts a load test
 func RunTest(directory string) error {
-	clientConfig, err := config.ParsePunchConfig(directory)
+	clientConfig, err := config.ParseConfigFile(directory)
 	if err != nil {
 		return err
 	}
