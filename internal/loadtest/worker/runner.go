@@ -111,12 +111,6 @@ func createWorkerLog(
 	openBracket := styleLogLvlAccent.Render("[ ")
 	closeBracket := styleLogLvlAccent.Render(" ]")
 
-	if l.Error == "" { // TODO: Change to l.Response
-		l.Error = "Punch – N/A"
-	} else {
-		l.Error = fmt.Sprintf("'%s'", l.Error)
-	}
-
 	header := fmt.Sprintf(
 		"%s %s%s %s Child #%d, Worker #%d%s\n",
 		styledTimestamp,
@@ -133,14 +127,12 @@ func createWorkerLog(
 		"  %s %s\n"+
 			"  ├── Global Request: #%d\n"+
 			"  ├── My request: #%d\n"+
-			"  ├── Latency: %s\n"+
-			"  └── Response Body: %s",
+			"  └── Latency: %s",
 		styleLogLvl(logLvl).Bold(true).Blink(true).Render("├── Got/Want:"),
 		gotAndWantStatusCodes,
 		c.GlobalReqCounter,
 		c.Curr,
 		formattedLatency,
-		l.Response, // Change to l.ResponseBody
 	)
 
 	// 6. Render the sub-logs in light grey (248)
@@ -215,7 +207,6 @@ func executeWorker(
 					ReqMethod:      req.Method,
 					WantStatusCode: req.WantStatusCode,
 					GotStatusCode:  0,
-					Response:          err.Error(),
 				}
 				c := CreateWorkerResLogCounts{
 					GlobalReqCounter: globalCounts.Curr.Load(),

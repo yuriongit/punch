@@ -97,7 +97,6 @@ type Log struct {
 	ReqMethod      string
 	GotStatusCode  uint16
 	WantStatusCode uint16
-	Response          string
 }
 
 // PostTestMetrics ...
