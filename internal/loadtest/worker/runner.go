@@ -270,7 +270,7 @@ func executeWorker(
 func RunWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
-	config *config.PunchConfig,
+	config *config.ConfigFile,
 	testID *config.TestID,
 ) {
 	streamPreTestLogs(logChan, testID)

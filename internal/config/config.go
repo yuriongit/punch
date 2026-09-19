@@ -14,26 +14,26 @@ import (
 
 // ParsePunchConfig reads, parses, and returns the Punch
 // configuration file.
-func ParsePunchConfig(directory string) (*PunchConfig, error) {
+func ParsePunchConfig(directory string) (*ConfigFile, error) {
 	// Attempt to change directory
 	err := os.Chdir(directory)
 	if err != nil {
-		return &PunchConfig{}, err
+		return &ConfigFile{}, err
 	}
 
 	// Attempt to read Punch configuration file
 	file, err := os.ReadFile(configFileName)
 	if err != nil {
-		return &PunchConfig{}, fmt.Errorf(
+		return &ConfigFile{}, fmt.Errorf(
 			"no configuration file provided: %w",
 			err,
 		)
 	}
 
-	var config PunchConfig
+	var config ConfigFile
 	// Attempt to parse Punch Configuration file
 	if err := json.Unmarshal(file, &config); err != nil {
-		return &PunchConfig{}, fmt.Errorf(
+		return &ConfigFile{}, fmt.Errorf(
 			"failed to unmarshal %s: %w",
 			configFileName,
 			err,
