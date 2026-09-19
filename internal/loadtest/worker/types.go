@@ -10,6 +10,8 @@ package worker
 import (
 	"sync/atomic"
 	"time"
+
+	"github.com/yuriongit/punch/internal/config"
 )
 
 /*
@@ -35,11 +37,11 @@ a load-test is set to fulfill. These counts are incremented
 by workers themselves.
 */
 type GlobalCounts struct {
-	Curr    atomic.Uint32
-	FatErr  atomic.Uint32
-	RegErr  atomic.Uint32
-	Succ    atomic.Uint32
-	Workers atomic.Uint32
+	Current    atomic.Uint32
+	FatalErr   atomic.Uint32
+	RegularErr atomic.Uint32
+	Success    atomic.Uint32
+	Workers    atomic.Uint32
 }
 
 /*
@@ -49,20 +51,20 @@ requests the worker is set out to fulfill. These counts are
 incremented by workers themselves.
 */
 type ChildCounts struct {
-	Curr       uint32
+	Current    uint32
 	FatalErr   uint32
 	RegularErr uint32
 	Success    uint32
 }
 
 /*
-CreateWorkerResLogCounts is what allows for helper CreateLog
+CurrentRequestCounts is what allows for helper CreateLog
 to accurately represent the requests that have been
 fulfilled by each worker.
 */
-type CreateWorkerResLogCounts struct {
-	GlobalReqCounter uint32
-	Curr             uint32
+type CurrentRequestCounts struct {
+	GlobalCurrent uint32
+	WorkerCurrent uint32
 }
 
 // LogLvl represents the log severity level for worker execution logs.
@@ -80,28 +82,40 @@ func (l LogLvl) EnumIdx() int {
 
 // LogLvl enums initialization
 const (
-	LogSuc LogLvl = iota + 1
-	LogFat
-	LogFin
-	LogErr
+	LogSucc LogLvl = iota + 1
+	LogFata
+	LogFini
+	LogErro
 )
+
+type StatusCode uint16
+
+type ID uint32
+
+type IDs struct {
+	Worker ID
+	Child  ID
+}
+
+type StatusCodes struct {
+	Got  StatusCode
+	Want StatusCode
+}
 
 /*
 Log defines the structure of the test logs presented to
 the client.
 */
 type Log struct {
-	Lvl            LogLvl
-	WorkerID       uint32
-	ChildID        uint32
-	ReqMethod      string
-	GotStatusCode  uint16
-	WantStatusCode uint16
+	Lvl         LogLvl
+	IDs         IDs
+	ReqMethod   string
+	StatusCodes StatusCodes
 }
 
 // PostTestMetrics ...
 type PostTestMetrics struct {
-	TestID             *string
+	TestID             *config.TestID
 	TestDuration       time.Duration
 	GracePeriodPercent uint8
 }

@@ -91,7 +91,7 @@ with custom colored brackets and light grey sub-logs.
 func createWorkerLog(
 	logChan chan<- string,
 	l *Log,
-	c *CreateWorkerResLogCounts,
+	c *CurrentRequestCounts,
 	latency time.Duration,
 ) {
 	logLvl := l.Lvl.Load()
@@ -105,7 +105,7 @@ func createWorkerLog(
 	coloredLvl := styledLogLvl.Render(logLvl)
 
 	// 3. Highlight Got and Want status codes using the log level's style
-	gotAndWantStatusCodes := styledLogLvl.Render(fmt.Sprintf("%d/%d", l.GotStatusCode, l.WantStatusCode))
+	gotAndWantStatusCodes := styledLogLvl.Render(fmt.Sprintf("%d/%d", l.StatusCodes.Got, l.StatusCodes.Want))
 
 	// 4. Accent-color the opening and closing brackets
 	openBracket := styleLogLvlAccent.Render("[ ")
@@ -117,8 +117,8 @@ func createWorkerLog(
 		openBracket,
 		coloredLvl,
 		faintStyle.Render("|"),
-		l.ChildID,
-		l.WorkerID,
+		l.IDs.Child,
+		l.IDs.Worker,
 		closeBracket,
 	)
 
@@ -130,8 +130,8 @@ func createWorkerLog(
 			"  └── Latency: %s",
 		styleLogLvl(logLvl).Bold(true).Blink(true).Render("├── Got/Want:"),
 		gotAndWantStatusCodes,
-		c.GlobalReqCounter,
-		c.Curr,
+		c.GlobalCurrent,
+		c.WorkerCurrent,
 		formattedLatency,
 	)
 
@@ -156,8 +156,7 @@ func executeWorker(
 	logChan chan<- string,
 	wg *sync.WaitGroup,
 	globalCounts *GlobalCounts,
-	workerID uint32,
-	childID uint32,
+	IDs IDs,
 	req ReqInfo,
 	targetRequests uint32,
 	baseDuration uint16,
@@ -181,7 +180,7 @@ func executeWorker(
 		deadline := time.Now().Add(maxTime)
 
 		// Request counters for each worker's child
-		counts := ChildCounts{}
+		workerCounts := ChildCounts{}
 
 		for time.Now().Before(deadline) {
 			// Pause to stretch requests over full BaseDuration
@@ -192,64 +191,67 @@ func executeWorker(
 			resp, err := httpClient.Get(req.URL)
 			elapsedTime := time.Since(requestStartTime)
 
-			counts.Curr++
-			globalCounts.Curr.Add(1)
+			workerCounts.Current++
+			globalCounts.Current.Add(1)
 
 			switch {
 			case err != nil:
-				counts.FatalErr++
-				globalCounts.FatErr.Add(1)
+				workerCounts.FatalErr++
+				globalCounts.FatalErr.Add(1)
 
 				l := Log{
-					Lvl:            LogFat,
-					WorkerID:       workerID,
-					ChildID:        childID,
-					ReqMethod:      req.Method,
-					WantStatusCode: req.WantStatusCode,
-					GotStatusCode:  0,
+					Lvl:       LogFata,
+					IDs:       IDs,
+					ReqMethod: req.Method,
+					// LogStatuses: {
+					// 		Want: req.WantStatusCode,
+					// 		Got:  0,
+					// },
 				}
-				c := CreateWorkerResLogCounts{
-					GlobalReqCounter: globalCounts.Curr.Load(),
-					Curr:             counts.Curr, // Rename to localCounts for improved clarity.
+				c := CurrentRequestCounts{
+					GlobalCurrent: globalCounts.Current.Load(),
+					WorkerCurrent: workerCounts.Current,
 				}
 
 				createWorkerLog(logChan, &l, &c, elapsedTime)
 
 			case resp.StatusCode == int(req.WantStatusCode):
-				counts.Success++
-				globalCounts.Succ.Add(1)
+				workerCounts.Success++
+				globalCounts.Success.Add(1)
 
 				l := Log{
-					Lvl:            LogSuc,
-					WorkerID:       workerID,
-					ChildID:        childID,
-					ReqMethod:      req.Method,
-					WantStatusCode: req.WantStatusCode,
-					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
+					Lvl:       LogSucc,
+					IDs:       IDs,
+					ReqMethod: req.Method,
+					StatusCodes: StatusCodes{
+						Want: StatusCode(req.WantStatusCode),
+						Got:  StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
+					},
 				}
-				c := CreateWorkerResLogCounts{
-					GlobalReqCounter: globalCounts.Curr.Load(),
-					Curr:             counts.Curr,
+				c := CurrentRequestCounts{
+					GlobalCurrent: globalCounts.Current.Load(),
+					WorkerCurrent: workerCounts.Current,
 				}
 
 				createWorkerLog(logChan, &l, &c, elapsedTime)
 				_ = resp.Body.Close()
 
 			default:
-				counts.RegularErr++
-				globalCounts.RegErr.Add(1)
+				workerCounts.RegularErr++
+				globalCounts.RegularErr.Add(1)
 
 				l := Log{
-					Lvl:            LogErr,
-					WorkerID:       workerID,
-					ChildID:        childID,
-					ReqMethod:      req.Method,
-					WantStatusCode: req.WantStatusCode,
-					GotStatusCode:  uint16(resp.StatusCode), //nolint:gosec // Status codes safely fit
+					Lvl:       LogErro,
+					IDs:       IDs,
+					ReqMethod: req.Method,
+					StatusCodes: StatusCodes{
+						Want: StatusCode(req.WantStatusCode),
+						Got:  StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
+					},
 				}
-				c := CreateWorkerResLogCounts{
-					GlobalReqCounter: globalCounts.Curr.Load(),
-					Curr:             counts.Curr,
+				c := CurrentRequestCounts{
+					GlobalCurrent: globalCounts.Current.Load(),
+					WorkerCurrent: workerCounts.Current,
 				}
 
 				createWorkerLog(logChan, &l, &c, elapsedTime)
@@ -257,7 +259,7 @@ func executeWorker(
 			}
 
 			// Stop when worker fulfills assigned quota
-			if counts.Curr == targetRequests {
+			if workerCounts.Current == targetRequests {
 				return
 			}
 		}
@@ -269,15 +271,15 @@ func RunWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
 	config *config.PunchConfig,
-	testID *string,
+	testID *config.TestID,
 ) {
 	streamPreTestLogs(logChan, testID)
 
 	globalCounts := GlobalCounts{
-		Curr:    atomic.Uint32{},
-		Workers: atomic.Uint32{},
-		FatErr:  atomic.Uint32{},
-		RegErr:  atomic.Uint32{},
+		Current:    atomic.Uint32{},
+		Workers:    atomic.Uint32{},
+		FatalErr:   atomic.Uint32{},
+		RegularErr: atomic.Uint32{},
 	}
 
 	testStartTime := time.Now()
@@ -332,14 +334,16 @@ func RunWorkers(
 				GracePeriodPercent: config.GracePeriodPercent,
 			}
 
-			workerID := globalCounts.Workers.Add(1)
+			workerID := ID(globalCounts.Workers.Add(1))
 
 			go executeWorker(
 				logChan,
 				wg,
 				&globalCounts,
-				workerID,
-				uint32(childID+1),
+				IDs{
+					Worker: workerID,
+					Child:  ID(childID + 1),
+				},
 				req,
 				reqsForThisWorker,
 				child.BaseDurationSecs,

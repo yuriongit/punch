@@ -12,6 +12,7 @@ import (
 	"time"
 
 	lg "charm.land/lipgloss/v2"
+	"github.com/yuriongit/punch/internal/config"
 )
 
 /*
@@ -23,7 +24,7 @@ Stream-related helpers
 // streamPreTestLogs outputs initial benchmark headers.
 func streamPreTestLogs(
 	logChan chan<- string,
-	testID *string,
+	testID *config.TestID,
 ) {
 	styledLeftBracket := primaryFaintStyle.Render("[ ")
 	styledRightBracket := primaryFaintStyle.Render(" ]")
@@ -52,7 +53,7 @@ func streamPostTestLogs(
 	currentDate := time.Now().Format(dateFormat)
 
 	testStatus := "Error"
-	if c.RegErr.Load() == 0 && c.FatErr.Load() == 0 {
+	if c.RegularErr.Load() == 0 && c.FatalErr.Load() == 0 {
 		testStatus = "Success"
 	}
 
@@ -66,7 +67,7 @@ func streamPostTestLogs(
 		testIDLog            = createPostMetricLog("Test ID", fmt.Sprintf("TEST-%s", *m.TestID))
 		testDurationLog      = createPostMetricLog("Duration", formatLatency(m.TestDuration))
 		gracePeriodLog       = createPostMetricLog("Grace Period", fmt.Sprintf("%d%s", m.GracePeriodPercent, "%"))
-		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Curr.Load()))
+		fulfilledRequestsLog = createPostMetricLog("Fulfilled", fmt.Sprintf("%d requests", c.Current.Load()))
 		totalWorkersLog      = createPostMetricLog("Workers", fmt.Sprintf("%d workers", c.Workers.Load()))
 	)
 

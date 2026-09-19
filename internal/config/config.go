@@ -45,8 +45,8 @@ func ParsePunchConfig(directory string) (*PunchConfig, error) {
 
 // GenerateTestID creates and returns a unique test ID of config.TestIDLen
 // characters.
-func GenerateTestID() string {
-	return rand.Text()[0:testIDLen]
+func GenerateTestID() TestID {
+	return TestID(rand.Text()[0:testIDLen])
 }
 
 // SetupTestMetadata is a part of the initialization process:
@@ -54,7 +54,7 @@ func GenerateTestID() string {
 // persists the ID and the clients configuration to Redis.
 // Disclaimer: Currently unimplemented; SetupTestMetadata steps
 // are included in the body of the function.
-func SetupTestMetadata(d *ClientTestData) (testID string, err error) {
+func SetupTestMetadata(d *ClientTestData) (testID TestID, err error) {
 	// Temporary use of variable ClientTestData
 	fmt.Printf("%s", d.TestID[0:0])
 	// Steps:
