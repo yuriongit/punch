@@ -5,4 +5,4 @@ in the Punch configuration file.
 relies on. Workers are able to make HTTP requests both in parallel
 and with concurrency.
 */
-package worker
+package engine

@@ -5,14 +5,12 @@ in the Punch configuration file.
 relies on. Workers are able to make HTTP requests both in parallel
 and with concurrency.
 */
-package worker
+package engine
 
 import (
-	"sync/atomic"
 	"time"
 
-	"github.com/yuriongit/punch/internal/config"
-	"github.com/yuriongit/punch/internal/shared"
+	"github.com/yuriongit/punch/internal/domain"
 )
 
 /*
@@ -27,22 +25,8 @@ type ReqInfo struct {
 	Method             string
 	URL                string
 	ChildName          string
-	WantStatusCode     shared.StatusCode
+	WantStatusCode     domain.StatusCode
 	GracePeriodPercent uint8
-}
-
-/*
-	GlobalCounts carries the statuses of the delegated requests
-
-a load-test is set to fulfill. These counts are incremented
-by workers themselves.
-*/
-type GlobalCounts struct {
-	Current    atomic.Uint32
-	FatalErr   atomic.Uint32
-	RegularErr atomic.Uint32
-	Success    atomic.Uint32
-	Workers    atomic.Uint32
 }
 
 /*
@@ -68,27 +52,6 @@ type CurrentRequestCounts struct {
 	WorkerCurrent uint32
 }
 
-// LogLvl represents the log severity level for worker execution logs.
-type LogLvl int
-
-// Load returns the string output of the enum
-func (l LogLvl) Load() string {
-	return [...]string{"LOG-SUCC", "LOG-FATA", "LOG-FINI", "LOG-ERRO"}[l-1]
-}
-
-// EnumIdx returns the index of the LogLvl enum.
-func (l LogLvl) EnumIdx() int {
-	return int(l)
-}
-
-// LogLvl enums initialization
-const (
-	LogSucc LogLvl = iota + 1
-	LogFata
-	LogFini
-	LogErro
-)
-
 type ID uint32
 
 type IDs struct {
@@ -97,8 +60,8 @@ type IDs struct {
 }
 
 type StatusCodes struct {
-	Got  shared.StatusCode
-	Want shared.StatusCode
+	Got  domain.StatusCode
+	Want domain.StatusCode
 }
 
 /*
@@ -106,16 +69,10 @@ Log defines the structure of the test logs presented to
 the client.
 */
 type Log struct {
-	Lvl         LogLvl
+	Lvl         domain.LogLevel
 	IDs         IDs
 	ReqMethod   string
 	StatusCodes StatusCodes
 	Latency     time.Duration
 }
 
-// PostTestMetrics ...
-type PostTestMetrics struct {
-	TestID             *config.TestID
-	TestDuration       time.Duration
-	GracePeriodPercent uint8
-}

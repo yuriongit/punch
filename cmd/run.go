@@ -13,7 +13,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/yuriongit/punch/internal/loadtest/controller"
+	"github.com/yuriongit/punch/internal/engine"
 )
 
 // runCmd represents the run command
@@ -34,7 +34,7 @@ If no directory is specified, Punch will return an error.`,
 		return nil
 	},
 	RunE: func(_ *cobra.Command, args []string) error {
-		return controller.RunTest(args[0])
+		return engine.RunTest(args[0])
 	},
 }
 

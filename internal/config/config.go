@@ -10,43 +10,45 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/yuriongit/punch/internal/domain"
 )
 
-// ParseConfigFile reads, parses, and returns the Punch
+// GetConfigFile reads, parses, and returns the Punch
 // configuration file.
-func ParseConfigFile(directory string) (*File, error) {
+func GetConfigFile(dir string) (*domain.ConfigFile, error) {
 	// Attempt to change directory
-	err := os.Chdir(directory)
+	err := os.Chdir(dir)
 	if err != nil {
-		return &File{}, err
+		return &domain.ConfigFile{}, err
 	}
 
-	// Attempt to read Punch configuration file
-	file, err := os.ReadFile(configFileName)
+	// Attempt to read Punch configuration cnfFile
+	cnfFile, err := os.ReadFile(domain.ConfigFileName)
 	if err != nil {
-		return &File{}, fmt.Errorf(
+		return &domain.ConfigFile{}, fmt.Errorf(
 			"no configuration file provided: %w",
 			err,
 		)
 	}
 
-	var config File
+	var cnf domain.ConfigFile
 	// Attempt to parse Punch Configuration file
-	if err := json.Unmarshal(file, &config); err != nil {
-		return &File{}, fmt.Errorf(
+	if err := json.Unmarshal(cnfFile, &cnf); err != nil {
+		return &domain.ConfigFile{}, fmt.Errorf(
 			"failed to unmarshal %s: %w",
-			configFileName,
+			domain.ConfigFileName,
 			err,
 		)
 	}
 
-	return &config, nil
+	return &cnf, nil
 }
 
-// GenerateTestID creates and returns a unique test ID of config.TestIDLen
+// CreateTestID creates and returns a unique test ID of config.TestIDLen
 // characters.
-func GenerateTestID() TestID {
-	return TestID(rand.Text()[0:testIDLen])
+func CreateTestID() (domain.TestID) {
+	return domain.TestID(rand.Text()[0:domain.TestIDLen])
 }
 
 // SetupTestMetadata is a part of the initialization process:
@@ -54,7 +56,7 @@ func GenerateTestID() TestID {
 // persists the ID and the clients configuration to Redis.
 // Disclaimer: Currently unimplemented; SetupTestMetadata steps
 // are included in the body of the function.
-func SetupTestMetadata(d *ClientTestData) (testID TestID, err error) {
+func SetupTestMetadata(d *domain.ClientTestData) (testID domain.TestID, err error) {
 	// Temporary use of variable ClientTestData
 	fmt.Printf("%s", d.TestID[0:0])
 	// Steps:

@@ -5,7 +5,7 @@ in the Punch configuration file.
 relies on. Workers are able to make HTTP requests both in parallel
 and with concurrency.
 */
-package worker
+package engine
 
 import (
 	"fmt"
@@ -14,8 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/yuriongit/punch/internal/config"
-	"github.com/yuriongit/punch/internal/shared"
+	"github.com/yuriongit/punch/internal/domain"
+	"github.com/yuriongit/punch/internal/ui"
 )
 
 /*
@@ -33,59 +33,6 @@ var httpClient = &http.Client{
 }
 
 /*
-formatLatency dynamically formats a time.Duration into
-human-readable units (nanoseconds, microseconds, milliseconds,
-seconds, minutes, hours).
-*/
-func formatLatency(
-	d time.Duration,
-) string {
-	switch {
-	case d < time.Microsecond:
-		ns := d.Nanoseconds()
-		if ns == 1 {
-			return "1 nanosecond"
-		}
-		return fmt.Sprintf("%d nanoseconds", ns)
-
-	case d < time.Millisecond:
-		us := float64(d.Nanoseconds()) / 1000.0
-		if us == 1.0 {
-			return "1 microsecond"
-		}
-		return fmt.Sprintf("%.2f microseconds", us)
-
-	case d < time.Second:
-		ms := float64(d.Nanoseconds()) / 1000000.0
-		if ms == 1.0 {
-			return "1 millisecond"
-		}
-		return fmt.Sprintf("%.2f milliseconds", ms)
-
-	case d < time.Minute:
-		s := d.Seconds()
-		if s == 1.0 {
-			return "1 second"
-		}
-		return fmt.Sprintf("%.2f seconds", s)
-
-	case d < time.Hour:
-		m := d.Minutes()
-		if m == 1.0 {
-			return "1 minute"
-		}
-		return fmt.Sprintf("%.2f minutes", m)
-
-	default:
-		h := d.Hours()
-		if h == 1.0 {
-			return "1 hour"
-		}
-		return fmt.Sprintf("%.2f hours", h)
-	}
-}
-
-/*
 createWorkerLog creates a formatted worker log
 with custom colored brackets and light grey sub-logs.
 */
@@ -94,29 +41,29 @@ func createWorkerLog(
 	l *Log,
 	c *CurrentRequestCounts,
 ) {
-	logLvl := l.Lvl.Load()
-	styledLogLvl := styleLogLvl(logLvl)
-	styledTimestamp := styleAndFormatTimestamp(styledLogLvl.Bold(false), time.Now())
-	formattedLatency := formatLatency(l.Latency)
+	formattedLogLevel := ui.FormatLogLevel(l.Lvl, true)
+	formattedTimestamp := ui.FormatTimestamp(time.Now(), l.Lvl, true) // Bold(false) on timestamp
+	formattedLatency := ui.FormatLatency(l.Latency)
 
-	styleLogLvlAccent := styleLogLvlAccent(logLvl)
+	// TODO: implement and use foreseen "color" parameter (bool):
+	formatLogLvlAccent := ui.LogLevelAccent(formattedLogLevel)
 
 	// 2. Colorize status level text
-	coloredLvl := styledLogLvl.Render(logLvl)
+	coloredLvl := ui.LogLevelAccent(formattedLogLevel)
 
 	// 3. Highlight Got and Want status codes using the log level's style
-	gotAndWantStatusCodes := styledLogLvl.Render(fmt.Sprintf("%d/%d", l.StatusCodes.Got, l.StatusCodes.Want))
+	formattedGotWantStatusCodes := fmt.Sprintf("%d/%d", l.StatusCodes.Got, l.StatusCodes.Want)
 
 	// 4. Accent-color the opening and closing brackets
-	openBracket := styleLogLvlAccent.Render("[ ")
-	closeBracket := styleLogLvlAccent.Render(" ]")
+	openBracket := formatLogLvlAccent.Render("[ ")
+	closeBracket := formatLogLvlAccent.Render(" ]")
 
 	header := fmt.Sprintf(
 		"%s %s%s %s Child #%d, Worker #%d%s\n",
-		styledTimestamp,
+		formattedTimestamp,
 		openBracket,
 		coloredLvl,
-		faintStyle.Render("|"),
+		ui.FaintStyle.Render("|"),
 		l.IDs.Child,
 		l.IDs.Worker,
 		closeBracket,
@@ -124,38 +71,28 @@ func createWorkerLog(
 
 	// 5. Build raw tree structure
 	rawSubLogs := fmt.Sprintf(
-		"  %s %s\n"+
+		"  %s\n"+
 			"  ├── Global Request: #%d\n"+
 			"  ├── My request: #%d\n"+
 			"  └── Latency: %s",
-		styleLogLvl(logLvl).Bold(true).Blink(true).Render("├── Got/Want:"),
-		gotAndWantStatusCodes,
+		ui.LogLevel(l.Lvl.Load()).Render(
+			fmt.Sprintf("├── Got/Want: %s", formattedGotWantStatusCodes),
+		),
 		c.GlobalCurrent,
 		c.WorkerCurrent,
 		formattedLatency,
 	)
 
 	// 6. Render the sub-logs in light grey (248)
-	coloredSubLogs := subLogStyle.Render(rawSubLogs)
+	coloredSubLogs := ui.SubLogStyle.Render(rawSubLogs)
 
 	logChan <- (header + coloredSubLogs)
-}
-
-// StreamWorkerLogs streams logs to stdout concurrently.
-func StreamWorkerLogs(
-	logChan chan string,
-	logWg *sync.WaitGroup,
-) {
-	defer logWg.Done()
-	for log := range logChan {
-		fmt.Println(log)
-	}
 }
 
 func executeWorker(
 	logChan chan<- string,
 	wg *sync.WaitGroup,
-	globalCounts *GlobalCounts,
+	globalCounts *domain.GlobalCounts,
 	IDs IDs,
 	req ReqInfo,
 	targetRequests uint32,
@@ -200,7 +137,7 @@ func executeWorker(
 				globalCounts.FatalErr.Add(1)
 
 				l := Log{
-					Lvl:       LogFata,
+					Lvl:       domain.LogFata,
 					IDs:       IDs,
 					ReqMethod: req.Method,
 					StatusCodes: StatusCodes{
@@ -221,12 +158,12 @@ func executeWorker(
 				globalCounts.Success.Add(1)
 
 				l := Log{
-					Lvl:       LogSucc,
+					Lvl:       domain.LogSucc,
 					IDs:       IDs,
 					ReqMethod: req.Method,
 					StatusCodes: StatusCodes{
-						Want: shared.StatusCode(req.WantStatusCode),
-						Got:  shared.StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
+						Want: domain.StatusCode(req.WantStatusCode),
+						Got:  domain.StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
 					},
 					Latency: latency,
 				}
@@ -243,12 +180,12 @@ func executeWorker(
 				globalCounts.RegularErr.Add(1)
 
 				l := Log{
-					Lvl:       LogErro,
+					Lvl:       domain.LogErro,
 					IDs:       IDs,
 					ReqMethod: req.Method,
 					StatusCodes: StatusCodes{
-						Want: shared.StatusCode(req.WantStatusCode),
-						Got:  shared.StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
+						Want: domain.StatusCode(req.WantStatusCode),
+						Got:  domain.StatusCode(resp.StatusCode), //nolint:gosec // Status codes safely fit
 					},
 					Latency: latency,
 				}
@@ -273,12 +210,11 @@ func executeWorker(
 func RunWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
-	config *config.File,
-	testID *config.TestID,
-) {
-	streamPreTestLogs(logChan, testID)
+	config *domain.ConfigFile,
 
-	globalCounts := GlobalCounts{
+	testID *domain.TestID,
+) (domain.PostTestMetrics, error) {
+	globalCounts := domain.GlobalCounts{
 		Current:    atomic.Uint32{},
 		Workers:    atomic.Uint32{},
 		FatalErr:   atomic.Uint32{},
@@ -308,7 +244,7 @@ func RunWorkers(
 		remainderReqs := child.TotalRequests % numWorkers
 
 		if child.WantStatusCode == nil {
-			childExpectedStatus := shared.StatusCode(200)
+			childExpectedStatus := domain.StatusCode(200)
 			child.WantStatusCode = &childExpectedStatus
 		}
 
@@ -358,11 +294,16 @@ func RunWorkers(
 	wg.Wait()
 	testDuration := time.Since(testStartTime)
 
-	postTestMetrics := PostTestMetrics{testID, time.Duration(testDuration), config.GracePeriodPercent}
+	// TODO: Move streaming logs to controller.
 
-	streamPostTestLogs(
-		logChan,
-		&postTestMetrics,
-		&globalCounts,
-	)
+	return domain.PostTestMetrics{
+		TestID:             testID,
+		TestDuration:       time.Duration(testDuration),
+		GracePeriodPercent: config.GracePeriodPercent,
+	}, nil
+
+	// streamPostTestLogs(
+	// 	logChan,
+	// 	&postTestMetrics,
+	// 	&globalCounts,
 }
