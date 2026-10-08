@@ -14,3 +14,5 @@ type GlobalCounts struct {
 	Success    atomic.Uint32
 	Workers    atomic.Uint32
 }
+
+type RequestCount uint32

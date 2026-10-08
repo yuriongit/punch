@@ -93,8 +93,8 @@ func FormatLatency(
 }
 
 func FormatLogLevel(logLvl domain.LogLevel, style bool) string {
-  
-  return ""
+
+	return ""
 }
 
 /*
@@ -137,13 +137,13 @@ Style-related helpers
 
 // TODO
 func FormatTimestamp(timestamp time.Time, logLvl domain.LogLevel, style bool) string {
-  time := timestamp.Format(timeFormat)
-  if style {
-    time = Timestamp(time, logLvl)
-  }
-  return time
+	time := timestamp.Format(timeFormat)
+	if style {
+		time = Timestamp(time, logLvl)
+	}
+	return time
 }
 
 func FormatDate(date time.Time) string {
-  return date.Format(dateFormat)
+	return date.Format(dateFormat)
 }

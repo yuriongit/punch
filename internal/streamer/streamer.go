@@ -1,4 +1,4 @@
-package stream
+package streamer
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ func PreTestLogs(
 }
 
 // streamPostTestLogs outputs post test metrics.
-func streamPostTestLogs(
+func PostTestMetrics(
 	logChan chan<- string,
 	m *domain.PostTestMetrics,
 	c *domain.GlobalCounts,
@@ -71,8 +71,8 @@ func streamPostTestLogs(
 	logChan <- ui.LineBreak("exit")
 }
 
-// TestLogs streams logs to stdout concurrently.
-func TestLogs(
+// TestData streams logs to stdout concurrently.
+func TestData(
 	logChan chan string,
 	logWg *sync.WaitGroup,
 ) {

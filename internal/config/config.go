@@ -14,9 +14,9 @@ import (
 	"github.com/yuriongit/punch/internal/domain"
 )
 
-// GetConfigFile reads, parses, and returns the Punch
+// LoadConfig reads, parses, and returns the Punch
 // configuration file.
-func GetConfigFile(dir string) (*domain.ConfigFile, error) {
+func LoadConfig(dir string) (*domain.ConfigFile, error) {
 	// Attempt to change directory
 	err := os.Chdir(dir)
 	if err != nil {
@@ -47,13 +47,13 @@ func GetConfigFile(dir string) (*domain.ConfigFile, error) {
 
 // CreateTestID creates and returns a unique test ID of config.TestIDLen
 // characters.
-func CreateTestID() (domain.TestID) {
+func CreateTestID() domain.TestID {
 	return domain.TestID(rand.Text()[0:domain.TestIDLen])
 }
 
 // SetupTestMetadata is a part of the initialization process:
 // It generates a unique test ID (with included retry-handling),
-// persists the ID and the clients configuration to Redis.
+// persists the ID and the clients configuration to SQLite maybe
 // Disclaimer: Currently unimplemented; SetupTestMetadata steps
 // are included in the body of the function.
 func SetupTestMetadata(d *domain.ClientTestData) (testID domain.TestID, err error) {

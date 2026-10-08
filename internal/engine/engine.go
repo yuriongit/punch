@@ -10,22 +10,19 @@ import (
 	"sync"
 
 	"github.com/yuriongit/punch/internal/config"
-	"github.com/yuriongit/punch/internal/stream"
+	"github.com/yuriongit/punch/internal/streamer"
 )
 
 // RunTest starts a load test
 func RunTest(dir string) error {
-	cnf, err := config.GetConfigFile(dir)
+	cnf, err := config.LoadConfig(dir)
 	if err != nil {
 		return err
 	}
-
 	testID := config.CreateTestID()
-	
+
 	var wg sync.WaitGroup
 	var logWg sync.WaitGroup
-
-	logWg.Add(1)
 
 	// Buffer channel to prevent blocking worker goroutines
 	logChanLen := uint32(50)
@@ -34,18 +31,15 @@ func RunTest(dir string) error {
 	}
 	logChan := make(chan string, logChanLen)
 
-	stream.PreTestLogs(logChan, &testID)
-	
-	go stream.TestLogs(logChan, &logWg)
-	RunWorkers(&wg, logChan, cnf, &testID)
+	logWg.Add(1)
+
+	streamer.PreTestLogs(logChan, &testID)
+	go streamer.TestData(logChan, &logWg)
+	metrics, counts := RunWorkers(&wg, logChan, cnf, &testID)
+	streamer.PostTestMetrics(logChan, &metrics, counts)
+
+	close(logChan)
 	logWg.Wait()
 
-	// stream.StreamPostTestLogs(
-	// 	logChan,
-	// 	&postTestMetrics,
-	// 	&globalCounts,
-	// )
-	
-	close(logChan)
 	return nil
 }

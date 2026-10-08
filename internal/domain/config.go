@@ -36,8 +36,6 @@ type ConfigFile struct {
 	Children           []Child `json:"children" binding:"required,dive"`
 }
 
-type TestID string
-
 /*
 ClientTestData defines the initial data required to
 initialize the load-test.

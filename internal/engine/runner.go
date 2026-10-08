@@ -18,6 +18,229 @@ import (
 	"github.com/yuriongit/punch/internal/ui"
 )
 
+type Logger interface {
+	Log(entry domain.LogEntry) // create LogEntry struct
+}
+
+type Request struct {
+	Method             string
+	URL                string
+	WantStatusCode     domain.StatusCode
+	GracePeriodPercent uint8
+}
+
+type IDs struct {
+	Worker domain.ID
+	Child  domain.ID
+}
+
+// Worker holds all state needed for a single goroutine worker to execute requests.
+type Worker struct {
+	ids        IDs
+	childId    domain.ID
+	req        Request
+	targetReqs uint32
+	delay      time.Duration
+	duration   time.Duration
+
+	client *http.Client
+	counts *domain.GlobalCounts
+	logger Logger
+}
+
+func NewWorker(
+	ids IDs,
+	req Request,
+	targetReqs uint32,
+
+	delay time.Duration,
+	duration time.Duration,
+
+	client *http.Client,
+	counts *domain.GlobalCounts,
+	logger Logger,
+) *Worker {
+	return &Worker{
+		ids:        ids,
+		req:        req,
+		targetReqs: targetReqs,
+		delay:      delay,
+		duration:   duration,
+
+		client: client,
+		counts: counts,
+		logger: logger,
+	}
+}
+
+func (w *Worker) Run(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	if w.targetReqs == 0 {
+		return
+	}
+
+	if w.req.Method != http.MethodGet {
+		panic("not yet implemented")
+	}
+
+	gracePeriod := (w.duration * time.Duration(w.req.GracePeriodPercent)) / 100
+	deadline := time.Now().Add(w.duration + gracePeriod)
+
+	var localReqCount uint32
+
+	for time.Now().Before(deadline) {
+		time.Sleep(w.delay)
+
+		start := time.Now()
+		resp, err := w.client.Get(w.req.URL)
+		latency := time.Since(start)
+
+		localReqCount++
+		w.counts.Current.Add(1)
+
+		w.handleResponse(resp, err, latency, localReqCount)
+
+		if localReqCount == w.targetReqs {
+			return
+		}
+	}
+}
+
+func (w *Worker) handleResponse(
+	resp *http.Response,
+	err error,
+	latency time.Duration,
+	localCount uint32,
+) {
+	var gotStatus domain.StatusCode
+	var lvl domain.LogLevel
+
+	switch {
+	case err != nil:
+		w.counts.FatalErr.Add(1)
+		lvl = domain.LogFata
+	case resp != nil && resp.StatusCode == int(w.req.WantStatusCode):
+		w.counts.Success.Add(1)
+		lvl = domain.LogSucc
+		_ = resp.Body.Close()
+		gotStatus = domain.StatusCode(resp.StatusCode)
+	default:
+		w.counts.RegularErr.Add(1)
+		lvl = domain.LogErro // relative
+		if resp != nil {
+			gotStatus = domain.StatusCode(resp.StatusCode)
+			_ = resp.Body.Close()
+		}
+	}
+
+	if w.logger != nil {
+		w.logger.Log(domain.LogEntry{
+			Level:      lvl,
+			WorkerID:   w.ids.Worker,
+			ChildID:    w.ids.Child,
+			WantStatus: w.req.WantStatusCode,
+			GotStatus:  gotStatus,
+			Latency:    latency,
+			GlobalReq:  domain.RequestCount(w.counts.Current.Load()),
+			WorkerReq:  domain.RequestCount(localCount),
+		})
+	}
+}
+
+// Runner orchestrates all workers.
+type Runner struct {
+	cfg    *domain.ConfigFile
+	client *http.Client
+	logger Logger
+}
+
+func NewRunner(cfg *domain.ConfigFile, logger Logger, client *http.Client) *Runner {
+	return &Runner{
+		cfg:    cfg,
+		logger: logger,
+		client: client,
+	}
+}
+
+// Run executes the full load test pool.
+func (r *Runner) Run(wg *sync.WaitGroup, testID *domain.TestID) (domain.PostTestMetrics, *domain.GlobalCounts) {
+	var counts domain.GlobalCounts
+	testStartTime := time.Now()
+
+	for childID, child := range r.cfg.Children {
+		if child.BaseDurationSecs == 0 || child.TotalRequests == 0 {
+			continue
+		}
+
+		numWorkers := uint32(float32(child.TotalRequests) / float32(child.BaseDurationSecs))
+		if numWorkers < 1 {
+			numWorkers = 1
+		}
+		if numWorkers > child.TotalRequests {
+			numWorkers = child.TotalRequests
+		}
+
+		baseReqs := child.TotalRequests / numWorkers
+		remainder := child.TotalRequests % numWorkers
+
+		wantStatus := domain.StatusCode(200)
+		if child.WantStatusCode != nil {
+			wantStatus = *child.WantStatusCode
+		}
+
+		url := fmt.Sprintf("%s://%s%s", r.cfg.Protocol, r.cfg.Target, child.Name)
+
+		req := Request{
+			Method:             child.Method,
+			URL:                url,
+			WantStatusCode:     wantStatus,
+			GracePeriodPercent: r.cfg.GracePeriodPercent,
+		}
+
+		baseDuration := time.Duration(child.BaseDurationSecs) * time.Second
+
+		for i := uint32(0); i < numWorkers; i++ {
+			workerReqs := baseReqs
+			if i < remainder {
+				workerReqs++
+			}
+
+			var delay time.Duration
+			if workerReqs > 0 {
+				delay = time.Duration((float64(child.BaseDurationSecs) / float64(workerReqs)) * float64(time.Second))
+			}
+
+			counts.Workers.Add(1)
+			wg.Add(1)
+
+			worker := NewWorker(
+				IDs{
+					Worker: domain.ID(counts.Workers.Load()),
+					Child:  domain.ID(childID + 1),
+				},
+				req,
+				workerReqs,
+				delay,
+				baseDuration,
+				r.client,
+				&counts,
+				r.logger,
+			)
+
+			go worker.Run(wg)
+		}
+	}
+
+	wg.Wait()
+
+	return domain.PostTestMetrics{
+		TestID:             testID,
+		TestDuration:       time.Since(testStartTime),
+		GracePeriodPercent: r.cfg.GracePeriodPercent,
+	}, &counts
+}
+
 /*
 Global HTTP Client configured with timeouts and connection
 pooling to prevent goroutine leaks and stalled requests during
@@ -211,9 +434,8 @@ func RunWorkers(
 	wg *sync.WaitGroup,
 	logChan chan<- string,
 	config *domain.ConfigFile,
-
 	testID *domain.TestID,
-) (domain.PostTestMetrics, error) {
+) (metrics domain.PostTestMetrics, counts *domain.GlobalCounts) {
 	globalCounts := domain.GlobalCounts{
 		Current:    atomic.Uint32{},
 		Workers:    atomic.Uint32{},
@@ -248,32 +470,45 @@ func RunWorkers(
 			child.WantStatusCode = &childExpectedStatus
 		}
 
-		URL := fmt.Sprintf("%s://%s%s", config.Protocol, config.Target, child.Name)
+		// Start constructing NewWorker data
+		workersIDs := IDs{
+			Worker: domain.ID((globalCounts.Workers.Load())),
+			Child:  domain.ID(childID + 1),
+		}
+		req := Request{
+			Method:             config.Children[workersIDs.Child].Method,
+			URL:                fmt.Sprintf("%s://%s%s", config.Protocol, config.Target, child.Name),
+			WantStatusCode:     *config.Children[workersIDs.Child].WantStatusCode,
+			GracePeriodPercent: config.GracePeriodPercent,
+		}
 
 		for i := uint32(0); i < numWorkers; i++ {
-			reqsForThisWorker := baseReqsPerWorker
+			targetReqs := baseReqsPerWorker
 			if i < remainderReqs {
-				reqsForThisWorker++
+				targetReqs++
 			}
 
 			// Delay calculation per request to fill BaseDurationSecs properly
-			var workerReqDelay time.Duration
-			if reqsForThisWorker > 0 {
-				workerReqDelay = time.Duration((float64(child.BaseDurationSecs) / float64(reqsForThisWorker)) * float64(time.Second))
+			var reqDelay time.Duration
+			if targetReqs > 0 {
+				reqDelay = time.Duration((float64(child.BaseDurationSecs) / float64(targetReqs)) * float64(time.Second))
 			}
+
+			worker := NewWorker(
+				workersIDs,
+				req,
+				targetReqs,
+				reqDelay,
+				time.Duration(child.BaseDurationSecs),
+				httpClient,
+				counts,
+				logger,
+			)
 
 			globalCounts.Workers.Add(1)
 			wg.Add(1)
 
-			req := ReqInfo{
-				Method:             child.Method,
-				URL:                URL,
-				ChildName:          child.Name,
-				WantStatusCode:     *child.WantStatusCode,
-				GracePeriodPercent: config.GracePeriodPercent,
-			}
-
-			workerID := ID(globalCounts.Workers.Add(1))
+			workerID := domain.ID(globalCounts.Workers.Add(1))
 
 			go executeWorker(
 				logChan,
@@ -281,12 +516,12 @@ func RunWorkers(
 				&globalCounts,
 				IDs{
 					Worker: workerID,
-					Child:  ID(childID + 1),
+					Child:  domain.ID(childID + 1),
 				},
 				req,
-				reqsForThisWorker,
+				targetReqs,
 				child.BaseDurationSecs,
-				workerReqDelay,
+				reqDelay,
 			)
 		}
 	}
@@ -300,10 +535,5 @@ func RunWorkers(
 		TestID:             testID,
 		TestDuration:       time.Duration(testDuration),
 		GracePeriodPercent: config.GracePeriodPercent,
-	}, nil
-
-	// streamPostTestLogs(
-	// 	logChan,
-	// 	&postTestMetrics,
-	// 	&globalCounts,
+	}, &globalCounts
 }

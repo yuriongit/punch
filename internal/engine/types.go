@@ -52,13 +52,6 @@ type CurrentRequestCounts struct {
 	WorkerCurrent uint32
 }
 
-type ID uint32
-
-type IDs struct {
-	Worker ID
-	Child  ID
-}
-
 type StatusCodes struct {
 	Got  domain.StatusCode
 	Want domain.StatusCode
@@ -75,4 +68,3 @@ type Log struct {
 	StatusCodes StatusCodes
 	Latency     time.Duration
 }
-
